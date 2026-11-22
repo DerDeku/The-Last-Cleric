@@ -12,6 +12,24 @@ public enum UnitTeam
     Hostile
 }
 
+public enum AttackShape
+{
+    Single,
+    Area
+}
+
+public enum AreaForm
+{
+    Circle,
+    Square
+}
+
+public enum AttackDelivery
+{
+    Melee,
+    Ranged
+}
+
 [CreateAssetMenu(fileName = "Unit", menuName = "Units/Unit Definition")]
 public class UnitDefinition : ScriptableObject
 {
@@ -20,7 +38,12 @@ public class UnitDefinition : ScriptableObject
     public float moveSpeed = 0f;
     public int contactDamage = 0;
     public float attackRange = 1f;
+    public float attackHeight = 0f;
     public float attackInterval = 1.2f;
+    public AttackShape attackShape = AttackShape.Single;
+    public AreaForm areaForm = AreaForm.Circle;
+    public AttackDelivery attackDelivery = AttackDelivery.Melee;
+    public bool previewAttack = false;
     public UnitTeam team = UnitTeam.Friendly;
     public float bodySize = 1f;
     public UnitShape shape = UnitShape.Square;

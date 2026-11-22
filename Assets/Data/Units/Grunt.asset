@@ -17,7 +17,12 @@ MonoBehaviour:
   moveSpeed: 1.7
   contactDamage: 10
   attackRange: 1
+  attackHeight: 0
   attackInterval: 1.5
+  attackShape: 0
+  areaForm: 0
+  attackDelivery: 0
+  previewAttack: 0
   team: 1
   bodySize: 0.75
   shape: 1

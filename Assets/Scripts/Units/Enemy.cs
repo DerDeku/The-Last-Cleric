@@ -2,24 +2,23 @@ using UnityEngine;
 
 public class Enemy : Unit
 {
-    Transform target;
+    Unit targetUnit;
 
-    public void SetTarget(Transform hero)
+    public void SetTarget(Unit unit)
     {
-        target = hero;
+        targetUnit = unit;
     }
 
     void Update()
     {
-        if (!IsAlive || target == null)
+        if (!IsAlive || targetUnit == null || !targetUnit.IsAlive)
             return;
 
-        Vector3 destination = target.position;
+        if (IsInAttackPosition(targetUnit))
+            return;
+
+        Vector3 destination = targetUnit.transform.position;
         destination.z = transform.position.z;
-        float distance = Vector2.Distance(transform.position, destination);
-        if (distance <= AttackRange)
-            return;
-
         transform.position = Vector3.MoveTowards(transform.position, destination, MoveSpeed * Time.deltaTime);
     }
 

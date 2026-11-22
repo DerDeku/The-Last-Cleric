@@ -100,14 +100,14 @@ public class WaveManager : MonoBehaviour
 
         Hero hero = NearestLivingHero(body.transform.position);
         if (hero != null)
-            enemy.SetTarget(hero.transform);
+            enemy.SetTarget(hero);
 
         alive.Add(enemy);
     }
 
     static bool AnyHeroAlive()
     {
-        Hero[] heroes = FindObjectsByType<Hero>(FindObjectsSortMode.None);
+        Hero[] heroes = FindObjectsByType<Hero>();
         foreach (Hero hero in heroes)
         {
             if (hero.IsAlive)
@@ -121,7 +121,7 @@ public class WaveManager : MonoBehaviour
     {
         Hero best = null;
         float bestDistance = float.MaxValue;
-        Hero[] heroes = FindObjectsByType<Hero>(FindObjectsSortMode.None);
+        Hero[] heroes = FindObjectsByType<Hero>();
         foreach (Hero hero in heroes)
         {
             if (!hero.IsAlive)

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class UnitAttack : MonoBehaviour
@@ -21,8 +22,8 @@ public class UnitAttack : MonoBehaviour
             return;
         }
 
-        Unit target = FindTarget();
-        if (target == null)
+        List<Unit> targets = FindTargets();
+        if (targets.Count == 0)
         {
             progress = 0f;
             chargeBar.SetVisible(false);
@@ -34,30 +35,49 @@ public class UnitAttack : MonoBehaviour
         if (progress >= 1f)
         {
             progress = 0f;
-            target.Damage(self.ContactDamage);
+            int damage = self.ContactDamage;
+            foreach (Unit target in targets)
+            {
+                if (target != null && target.IsAlive)
+                    target.Damage(damage);
+            }
         }
 
         chargeBar.SetProgress(progress);
     }
 
-    Unit FindTarget()
+    List<Unit> FindTargets()
     {
-        Unit best = null;
-        float bestDistance = self.AttackRange * self.AttackRange;
-        Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
+        var targets = new List<Unit>();
+        Unit nearest = null;
+        float nearestDistance = float.MaxValue;
+        Unit[] units = FindObjectsByType<Unit>();
         foreach (Unit candidate in units)
         {
             if (candidate == self || !candidate.IsAlive || candidate.Team == self.Team)
                 continue;
 
-            float distance = ((Vector2)candidate.transform.position - (Vector2)self.transform.position).sqrMagnitude;
-            if (distance > bestDistance)
+            if (!self.CanHit(candidate))
                 continue;
 
-            best = candidate;
-            bestDistance = distance;
+            float distance = ((Vector2)candidate.transform.position - (Vector2)self.transform.position).sqrMagnitude;
+
+            if (self.AttackShape == AttackShape.Area)
+            {
+                targets.Add(candidate);
+                continue;
+            }
+
+            if (distance > nearestDistance)
+                continue;
+
+            nearest = candidate;
+            nearestDistance = distance;
         }
 
-        return best;
+        if (self.AttackShape == AttackShape.Single && nearest != null)
+            targets.Add(nearest);
+
+        return targets;
     }
 }

@@ -10,7 +10,7 @@ public class HealEffect : MonoBehaviour
             return;
 
         float radiusSqr = worldRadius * worldRadius;
-        Unit[] units = FindObjectsByType<Unit>(FindObjectsSortMode.None);
+        Unit[] units = FindObjectsByType<Unit>();
         foreach (Unit unit in units)
         {
             Vector2 position = unit.transform.position;
