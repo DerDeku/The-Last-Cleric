@@ -31,7 +31,10 @@ public class Hotbar : MonoBehaviour
             SpellData spell = spells.GetSlot(slot);
             string name = spell == null ? "Leer" : spell.spellName;
             float cooldown = spells.CooldownRemaining(slot);
+            bool waiting = slot == 3 && spells.ShieldArmed && cooldown > 0.05f;
             string timer = cooldown > 0.05f ? cooldown.ToString("0.0") : "bereit";
+            if (waiting)
+                timer = "wartet";
             if (spell == null)
                 timer = "";
 

@@ -67,6 +67,14 @@ public class UnitAttack : MonoBehaviour
     List<Unit> FindTargets()
     {
         var targets = new List<Unit>();
+        Unit focus = self.AttackFocus;
+        if (focus != null && focus.IsAlive)
+        {
+            if (self.CanHit(focus))
+                targets.Add(focus);
+            return targets;
+        }
+
         Unit nearest = null;
         float nearestDistance = float.MaxValue;
         Unit[] units = FindObjectsByType<Unit>();

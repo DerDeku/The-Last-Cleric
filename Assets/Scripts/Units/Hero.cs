@@ -3,6 +3,7 @@ using UnityEngine;
 public class Hero : Unit
 {
     Vector3 anchor;
+    Unit focus;
 
     protected override void Awake()
     {
@@ -13,11 +14,33 @@ public class Hero : Unit
     void Update()
     {
         if (!IsAlive || !HoldPosition || AttackDelivery != AttackDelivery.Melee || MoveSpeed <= 0f)
+        {
+            focus = null;
+            SetAttackFocus(null);
             return;
+        }
 
+        if (focus != null && !focus.IsAlive)
+            focus = null;
+
+        if (focus == null)
+            focus = NearestShootingRanged();
+
+        SetAttackFocus(focus);
+        if (focus != null)
+        {
+            if (!IsInAttackPosition(focus))
+                MoveTo(focus.transform.position);
+            return;
+        }
+
+        MoveTo(anchor);
+    }
+
+    Unit NearestShootingRanged()
+    {
         Unit threat = null;
         float threatDistance = float.MaxValue;
-        bool engaged = false;
         Vector2 self = transform.position;
         Unit[] units = FindObjectsByType<Unit>();
         foreach (Unit other in units)
@@ -25,10 +48,7 @@ public class Hero : Unit
             if (other == null || other == this || !other.IsAlive || other.Team == Team)
                 continue;
 
-            if (CanHit(other) || other.CanHit(this))
-                engaged = true;
-
-            if (other.AttackDelivery != AttackDelivery.Ranged || CanHit(other) || !IsShooting(other, units))
+            if (other.AttackDelivery != AttackDelivery.Ranged || !IsShooting(other, units))
                 continue;
 
             float distance = (self - (Vector2)other.transform.position).sqrMagnitude;
@@ -39,14 +59,7 @@ public class Hero : Unit
             threatDistance = distance;
         }
 
-        if (threat != null)
-        {
-            MoveTo(threat.transform.position);
-            return;
-        }
-
-        if (!engaged)
-            MoveTo(anchor);
+        return threat;
     }
 
     static bool IsShooting(Unit ranged, Unit[] units)

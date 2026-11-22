@@ -9,8 +9,12 @@ public class CursorIndicator : MonoBehaviour
     [SerializeField] Color emptyBorder = new Color(1f, 1f, 1f, 0.45f);
     [SerializeField] Color chargeColor = new Color(1f, 1f, 1f, 0.4f);
 
+    static readonly Color CastColor = new Color(1f, 0.82f, 0.35f, 0.62f);
+    static readonly Color ArmedBorder = new Color(1f, 0.82f, 0.35f, 0.95f);
+
     Texture2D circleTexture;
     Texture2D chargeTexture;
+    Texture2D castTexture;
     float builtRadius = -1f;
     float builtBorder = -1f;
     Color builtFill;
@@ -26,14 +30,19 @@ public class CursorIndicator : MonoBehaviour
         if (pointer == null)
             return;
 
-        SpellData spell = SpellController.Instance != null ? SpellController.Instance.Selected : null;
+        SpellController spells = SpellController.Instance;
+        SpellData spell = spells != null ? spells.Selected : null;
         float pixelRadius = spell == null ? emptyRadius : WorldRadiusToPixels(spell.radius);
         Color fill = spell == null ? emptyFill : spell.fillColor;
         Color border = spell == null ? emptyBorder : spell.borderColor;
-        float charge = SpellController.Instance != null ? SpellController.Instance.IndicatorFill() : 0f;
+        float charge = spells != null ? spells.IndicatorFill() : 0f;
+        float cast = spells != null ? spells.CastFill : 0f;
+        if (spells != null && spells.ShieldArmed && cast <= 0f)
+            border = ArmedBorder;
 
         RebuildCircle(pixelRadius, fill, border);
         RebuildCharge(charge);
+        EnsureCastTexture();
         if (circleTexture == null)
             return;
 
@@ -44,8 +53,15 @@ public class CursorIndicator : MonoBehaviour
         var circleRect = new Rect(x, y, diameter, diameter);
         GUI.DrawTexture(circleRect, circleTexture, ScaleMode.StretchToFill, true);
 
-        if (chargeTexture != null && charge > 0.01f)
+        if (chargeTexture != null && charge > 0.01f && cast <= 0.01f)
             GUI.DrawTexture(circleRect, chargeTexture, ScaleMode.StretchToFill, true);
+
+        if (castTexture != null && cast > 0.01f)
+        {
+            float size = diameter * cast;
+            float inset = (diameter - size) * 0.5f;
+            GUI.DrawTexture(new Rect(x + inset, y + inset, size, size), castTexture, ScaleMode.StretchToFill, true);
+        }
     }
 
     void OnDestroy()
@@ -54,6 +70,8 @@ public class CursorIndicator : MonoBehaviour
             Destroy(circleTexture);
         if (chargeTexture != null)
             Destroy(chargeTexture);
+        if (castTexture != null)
+            Destroy(castTexture);
     }
 
     float WorldRadiusToPixels(float worldRadius)
@@ -121,6 +139,40 @@ public class CursorIndicator : MonoBehaviour
         builtBorder = borderWidth;
         builtFill = fill;
         builtBorderColor = border;
+    }
+
+    void EnsureCastTexture()
+    {
+        if (castTexture != null)
+            return;
+
+        const int size = 64;
+        castTexture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Bilinear,
+            wrapMode = TextureWrapMode.Clamp,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+
+        var pixels = new Color32[size * size];
+        float half = (size - 1) * 0.5f;
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float outside = Vector2.Distance(new Vector2(x, y), new Vector2(half, half)) - half;
+                if (outside > 1f)
+                    continue;
+
+                Color color = CastColor;
+                if (outside > 0f)
+                    color.a *= 1f - outside;
+                pixels[y * size + x] = color;
+            }
+        }
+
+        castTexture.SetPixels32(pixels);
+        castTexture.Apply(false, false);
     }
 
     void RebuildCharge(float fill)

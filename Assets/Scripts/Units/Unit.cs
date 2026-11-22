@@ -33,6 +33,12 @@ public class Unit : MonoBehaviour
     public BattleLine TargetLine => targetLine;
     public bool HoldPosition => holdPosition;
     public float AttackMoveMultiplier => Mathf.Clamp01(attackMoveMultiplier);
+    public Unit AttackFocus { get; private set; }
+
+    public void SetAttackFocus(Unit unit)
+    {
+        AttackFocus = unit;
+    }
     public int MaxHealth => Mathf.Max(1, baseMaxHealth + bonusMaxHealth);
     public float MoveSpeed => Mathf.Max(0f, baseMoveSpeed + bonusMoveSpeed);
     public int ContactDamage => Mathf.Max(0, baseContactDamage + bonusContactDamage);

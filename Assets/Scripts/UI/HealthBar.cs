@@ -2,10 +2,23 @@ using UnityEngine;
 
 public class HealthBar : MonoBehaviour
 {
+    const float LifeWidth = 1f;
+    const float BarHeight = 0.14f;
+    const float Pad = 0.1f;
+    const float MaxShown = 3f;
+
+    static readonly Color ShieldOnLife = new Color(0.35f, 0.7f, 1f, 0.55f);
+    static readonly Color ShieldExtra = new Color(0.45f, 0.82f, 1f, 0.92f);
+    static readonly Color ShieldHot = new Color(0.9f, 0.97f, 1f, 1f);
+
     Unit unit;
+    Transform background;
     Transform healthFill;
     Transform shieldFill;
+    Transform overflowFill;
     SpriteRenderer shieldRenderer;
+    SpriteRenderer overflowRenderer;
+    GameObject lifeMark;
 
     public static void Attach(Unit target, Color fillColor)
     {
@@ -15,10 +28,14 @@ public class HealthBar : MonoBehaviour
 
         var bar = root.AddComponent<HealthBar>();
         bar.unit = target;
-        CreatePiece(root.transform, "Background", RuntimeSprites.Square(), new Vector3(0f, 0f, 0f), new Vector3(1.2f, 0.24f, 1f), new Color(0.05f, 0.05f, 0.05f, 0.9f), 20);
-        bar.healthFill = CreatePiece(root.transform, "Health", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(1f, 0.14f, 1f), fillColor, 21);
-        bar.shieldFill = CreatePiece(root.transform, "Shield", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(0f, 0.14f, 1f), new Color(0.35f, 0.7f, 1f, 0.55f), 22);
+        bar.background = CreatePiece(root.transform, "Background", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.6f, 0f, 0f), new Vector3(LifeWidth + Pad * 2f, 0.24f, 1f), new Color(0.05f, 0.05f, 0.05f, 0.9f), 20);
+        bar.healthFill = CreatePiece(root.transform, "Health", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(LifeWidth, BarHeight, 1f), fillColor, 21);
+        bar.shieldFill = CreatePiece(root.transform, "Shield", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(0f, BarHeight, 1f), ShieldOnLife, 22);
+        bar.overflowFill = CreatePiece(root.transform, "Shield Extra", RuntimeSprites.SquareLeftPivot(), new Vector3(0.5f, 0f, 0f), new Vector3(0f, BarHeight, 1f), ShieldExtra, 22);
+        bar.lifeMark = CreatePiece(root.transform, "Life Mark", RuntimeSprites.Square(), new Vector3(0.5f, 0f, 0f), new Vector3(0.035f, 0.2f, 1f), new Color(1f, 1f, 1f, 0.8f), 23).gameObject;
+        bar.lifeMark.SetActive(false);
         bar.shieldRenderer = bar.shieldFill.GetComponent<SpriteRenderer>();
+        bar.overflowRenderer = bar.overflowFill.GetComponent<SpriteRenderer>();
     }
 
     void LateUpdate()
@@ -27,12 +44,36 @@ public class HealthBar : MonoBehaviour
             return;
 
         float health = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)unit.Health / unit.MaxHealth);
-        healthFill.localScale = new Vector3(health, 0.14f, 1f);
+        healthFill.localScale = new Vector3(health * LifeWidth, BarHeight, 1f);
 
-        float shield = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)unit.Shield / unit.MaxHealth);
-        shieldFill.localScale = new Vector3(shield, 0.14f, 1f);
+        float ratio = unit.MaxHealth <= 0 ? 0f : Mathf.Max(0f, (float)unit.Shield / unit.MaxHealth);
+        float shown = Mathf.Min(ratio, MaxShown);
+        float hot = Mathf.Clamp01((ratio - MaxShown) / 2f);
+        float covered = Mathf.Min(shown, 1f) * LifeWidth;
+        float extra = Mathf.Max(0f, shown - 1f) * LifeWidth;
+
+        shieldFill.localScale = new Vector3(covered, BarHeight, 1f);
+        overflowFill.localScale = new Vector3(extra, BarHeight, 1f);
         if (shieldRenderer != null)
-            shieldRenderer.enabled = shield > 0.001f;
+        {
+            shieldRenderer.enabled = covered > 0.001f;
+            shieldRenderer.color = Color.Lerp(ShieldOnLife, ShieldHot, hot);
+        }
+
+        if (overflowRenderer != null)
+        {
+            overflowRenderer.enabled = extra > 0.001f;
+            overflowRenderer.color = Color.Lerp(ShieldExtra, ShieldHot, hot);
+        }
+
+        if (background != null)
+        {
+            float span = Mathf.Max(LifeWidth, shown * LifeWidth);
+            background.localScale = new Vector3(span + Pad * 2f, 0.24f, 1f);
+        }
+
+        if (lifeMark != null)
+            lifeMark.SetActive(extra > 0.001f);
     }
 
     static Transform CreatePiece(Transform parent, string name, Sprite sprite, Vector3 localPosition, Vector3 localScale, Color color, int sortingOrder)

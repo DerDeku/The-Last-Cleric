@@ -14,10 +14,24 @@ public class SpellController : MonoBehaviour
     float tickTimer;
     int selectedSlot = 1;
     bool castShieldWhenReady;
+    SpellData casting;
+    int castingSlot;
+    float castTimer;
     AudioSource audio;
 
     public int SelectedSlot => selectedSlot;
+    public bool ShieldArmed => castShieldWhenReady;
     public Vector2 WorldCursor { get; private set; }
+
+    public float CastFill
+    {
+        get
+        {
+            if (casting == null || casting.castTime <= 0f)
+                return 0f;
+            return Mathf.Clamp01(castTimer / casting.castTime);
+        }
+    }
 
     public SpellData Selected => GetSlot(selectedSlot);
 
@@ -61,6 +75,7 @@ public class SpellController : MonoBehaviour
         TickCooldowns();
         ReadHotkey();
         CastQueuedShield();
+        TickCast();
         TickPeriodicHeal();
     }
 
@@ -114,10 +129,13 @@ public class SpellController : MonoBehaviour
         selectedSlot = hotkey;
         castShieldWhenReady = hotkey == 3 && CooldownRemaining(3) > 0f;
 
-        if (hotkey == 1)
+        if (hotkey == 1 || hotkey == 4 || CooldownRemaining(hotkey) > 0f)
+        {
+            CancelCast();
             return;
+        }
 
-        TryCast(hotkey);
+        BeginCast(hotkey);
     }
 
     void CastQueuedShield()
@@ -126,15 +144,49 @@ public class SpellController : MonoBehaviour
             return;
 
         castShieldWhenReady = false;
-        TryCast(3);
+        BeginCast(3);
     }
 
-    void TryCast(int slot)
+    void BeginCast(int slot)
     {
         SpellData spell = GetSlot(slot);
-        if (spell == null || CooldownRemaining(slot) > 0f)
+        if (spell == null || spell.kind == SpellKind.PeriodicHeal || CooldownRemaining(slot) > 0f)
             return;
 
+        if (spell.castTime <= 0f)
+        {
+            FinishCast(spell, slot);
+            return;
+        }
+
+        casting = spell;
+        castingSlot = slot;
+        castTimer = 0f;
+    }
+
+    void TickCast()
+    {
+        if (casting == null)
+            return;
+
+        castTimer += Time.deltaTime;
+        if (castTimer < casting.castTime)
+            return;
+
+        SpellData spell = casting;
+        int slot = castingSlot;
+        casting = null;
+        FinishCast(spell, slot);
+    }
+
+    void CancelCast()
+    {
+        casting = null;
+        castTimer = 0f;
+    }
+
+    void FinishCast(SpellData spell, int slot)
+    {
         Apply(spell);
         cooldownRemaining[slot - 1] = Mathf.Max(0f, spell.cooldown);
     }
