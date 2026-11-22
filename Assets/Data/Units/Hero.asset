@@ -15,7 +15,10 @@ MonoBehaviour:
   displayName: Hero
   maxHealth: 100
   moveSpeed: 0
-  contactDamage: 0
+  contactDamage: 8
+  attackRange: 1
+  attackInterval: 1.15
+  team: 0
   bodySize: 1.05
   shape: 0
   bodyColor: {r: 0.2, g: 0.82, b: 0.28, a: 1}

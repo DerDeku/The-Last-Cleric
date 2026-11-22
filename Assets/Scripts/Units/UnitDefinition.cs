@@ -6,6 +6,12 @@ public enum UnitShape
     Circle
 }
 
+public enum UnitTeam
+{
+    Friendly,
+    Hostile
+}
+
 [CreateAssetMenu(fileName = "Unit", menuName = "Units/Unit Definition")]
 public class UnitDefinition : ScriptableObject
 {
@@ -13,6 +19,9 @@ public class UnitDefinition : ScriptableObject
     public int maxHealth = 10;
     public float moveSpeed = 0f;
     public int contactDamage = 0;
+    public float attackRange = 1f;
+    public float attackInterval = 1.2f;
+    public UnitTeam team = UnitTeam.Friendly;
     public float bodySize = 1f;
     public UnitShape shape = UnitShape.Square;
     public Color bodyColor = Color.white;

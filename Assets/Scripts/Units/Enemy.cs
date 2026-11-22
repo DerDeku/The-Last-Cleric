@@ -16,16 +16,11 @@ public class Enemy : Unit
 
         Vector3 destination = target.position;
         destination.z = transform.position.z;
-        transform.position = Vector3.MoveTowards(transform.position, destination, MoveSpeed * Time.deltaTime);
-
-        if (Vector2.Distance(transform.position, destination) > 0.55f)
+        float distance = Vector2.Distance(transform.position, destination);
+        if (distance <= AttackRange)
             return;
 
-        Hero hero = target.GetComponent<Hero>();
-        if (hero != null && hero.IsAlive)
-            hero.Damage(ContactDamage);
-
-        Damage(Health);
+        transform.position = Vector3.MoveTowards(transform.position, destination, MoveSpeed * Time.deltaTime);
     }
 
     protected override void OnDeath()

@@ -16,6 +16,9 @@ MonoBehaviour:
   maxHealth: 12
   moveSpeed: 1.7
   contactDamage: 10
+  attackRange: 1
+  attackInterval: 1.5
+  team: 1
   bodySize: 0.75
   shape: 1
   bodyColor: {r: 0.9, g: 0.18, b: 0.18, a: 1}

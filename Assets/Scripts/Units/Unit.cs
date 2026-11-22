@@ -10,11 +10,19 @@ public class Unit : MonoBehaviour
     float bonusMoveSpeed;
     int baseContactDamage;
     int bonusContactDamage;
+    float baseAttackRange;
+    float bonusAttackRange;
+    float baseAttackInterval;
+    float bonusAttackInterval;
+    UnitTeam team = UnitTeam.Friendly;
 
     public UnitDefinition Definition => definition;
+    public UnitTeam Team => team;
     public int MaxHealth => Mathf.Max(1, baseMaxHealth + bonusMaxHealth);
     public float MoveSpeed => Mathf.Max(0f, baseMoveSpeed + bonusMoveSpeed);
     public int ContactDamage => Mathf.Max(0, baseContactDamage + bonusContactDamage);
+    public float AttackRange => Mathf.Max(0f, baseAttackRange + bonusAttackRange);
+    public float AttackInterval => Mathf.Max(0.05f, baseAttackInterval + bonusAttackInterval);
     public int Health { get; private set; }
     public bool IsAlive => Health > 0;
 
@@ -33,9 +41,14 @@ public class Unit : MonoBehaviour
         baseMaxHealth = Mathf.Max(1, source.maxHealth);
         baseMoveSpeed = Mathf.Max(0f, source.moveSpeed);
         baseContactDamage = Mathf.Max(0, source.contactDamage);
+        baseAttackRange = Mathf.Max(0f, source.attackRange);
+        baseAttackInterval = Mathf.Max(0.05f, source.attackInterval);
+        team = source.team;
         bonusMaxHealth = 0;
         bonusMoveSpeed = 0f;
         bonusContactDamage = 0;
+        bonusAttackRange = 0f;
+        bonusAttackInterval = 0f;
         Health = MaxHealth;
 
         if (!string.IsNullOrEmpty(source.displayName))
@@ -60,6 +73,16 @@ public class Unit : MonoBehaviour
     public void AddBonusContactDamage(int amount)
     {
         bonusContactDamage += amount;
+    }
+
+    public void AddBonusAttackRange(float amount)
+    {
+        bonusAttackRange += amount;
+    }
+
+    public void AddBonusAttackInterval(float amount)
+    {
+        bonusAttackInterval += amount;
     }
 
     public void Heal(int amount)
@@ -97,5 +120,7 @@ public class Unit : MonoBehaviour
 
         if (GetComponentInChildren<HealthBar>() == null)
             HealthBar.Attach(this, source.healthBarColor);
+        if (GetComponent<UnitAttack>() == null)
+            gameObject.AddComponent<UnitAttack>();
     }
 }
