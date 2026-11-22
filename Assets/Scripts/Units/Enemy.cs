@@ -95,6 +95,7 @@ public class Enemy : Unit
 
     protected override void OnDeath()
     {
+        SaveGame.AddGold(GoldDrop);
         Destroy(gameObject);
     }
 }

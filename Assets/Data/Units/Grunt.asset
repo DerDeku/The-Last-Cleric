@@ -31,3 +31,4 @@ MonoBehaviour:
   targetLine: 0
   holdPosition: 0
   attackMoveMultiplier: 0
+  goldDrop: 2

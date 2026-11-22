@@ -12,6 +12,12 @@ public static class SpellSounds
         source = audio;
     }
 
+    public static void Stop()
+    {
+        if (source != null)
+            source.Stop();
+    }
+
     public static void Play(SpellKind kind)
     {
         if (source == null)
@@ -21,7 +27,11 @@ public static class SpellSounds
         switch (kind)
         {
             case SpellKind.BurstHeal:
+            case SpellKind.TriageHeal:
                 source.PlayOneShot(Burst(), 0.5f);
+                break;
+            case SpellKind.ChargedHeal:
+                source.PlayOneShot(Burst(), 0.4f);
                 break;
             case SpellKind.Shield:
                 source.PlayOneShot(Shield(), 0.55f);

@@ -41,4 +41,20 @@ public class InputManager : MonoBehaviour
         else if (keyboard.digit4Key.wasPressedThisFrame)
             PressedHotkey = 4;
     }
+
+    public bool IsHeld(int slot)
+    {
+        Keyboard keyboard = Keyboard.current;
+        if (keyboard == null)
+            return false;
+
+        switch (slot)
+        {
+            case 1: return keyboard.digit1Key.isPressed;
+            case 2: return keyboard.digit2Key.isPressed;
+            case 3: return keyboard.digit3Key.isPressed;
+            case 4: return keyboard.digit4Key.isPressed;
+            default: return false;
+        }
+    }
 }

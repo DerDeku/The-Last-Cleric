@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Roster
   m_EditorClassIdentifier: Assembly-CSharp::PrepareRoster
   partySize: 4
+  lockedSlot: 4
+  lockedNode: fourth
   heroes:
   - id: fighter
     nameKey: hero.fighter
@@ -22,10 +24,18 @@ MonoBehaviour:
     tree: {fileID: 11400000, guid: e6f708192a3b4c5d6e7f8091a2b3c4d5, type: 2}
   - id: ranger
     nameKey: hero.ranger
-    unlockEvent: 
-    startsActive: 1
+    unlockEvent: chapter.1
+    startsActive: 0
+    home: {x: -5.4, y: 0}
     unit: {fileID: 11400000, guid: c3d2e4f5061728394a5b6c7d8e9f0133, type: 2}
     tree: {fileID: 11400000, guid: f708192a3b4c5d6e7f8091a2b3c4d5e6, type: 2}
+  - id: mage
+    nameKey: hero.mage
+    unlockEvent: chapter.2
+    startsActive: 0
+    home: {x: -4.2, y: 1.45}
+    unit: {fileID: 11400000, guid: a7c3e1b94d2f4a6e8c9d0b1a2f3e4d71, type: 2}
+    tree: {fileID: 11400000, guid: c8d9e0f102132435465768798a9b0c1d, type: 2}
   cleric:
     id: cleric
     nameKey: prepare.cleric

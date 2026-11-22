@@ -23,7 +23,8 @@ MonoBehaviour:
     - step
     - reach
     revealEvent: 
-    effectId: 
+    effect: 0
+    amount: 0
     cost: 0
     root: 1
   - id: guard
@@ -33,8 +34,9 @@ MonoBehaviour:
     links:
     - core
     revealEvent: 
-    effectId: fighter.guard
-    cost: 1
+    effect: 1
+    amount: 2
+    cost: 30
     root: 0
   - id: step
     titleKey: skill.fighter.step
@@ -43,8 +45,9 @@ MonoBehaviour:
     links:
     - core
     revealEvent: 
-    effectId: fighter.step
-    cost: 1
+    effect: 2
+    amount: 0.25
+    cost: 20
     root: 0
   - id: reach
     titleKey: skill.fighter.reach
@@ -54,8 +57,9 @@ MonoBehaviour:
     - core
     - oath
     revealEvent: 
-    effectId: fighter.reach
-    cost: 1
+    effect: 3
+    amount: 0.15
+    cost: 25
     root: 0
   - id: oath
     titleKey: skill.fighter.oath
@@ -64,6 +68,7 @@ MonoBehaviour:
     links:
     - reach
     revealEvent: demo.oath
-    effectId: 
-    cost: 1
+    effect: 0
+    amount: 0
+    cost: 50
     root: 0

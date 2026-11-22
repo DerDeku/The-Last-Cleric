@@ -21,16 +21,58 @@ MonoBehaviour:
     links:
     - ward
     revealEvent: 
-    effectId: 
+    effect: 0
+    amount: 0
     cost: 0
     root: 1
   - id: ward
     titleKey: skill.cleric.ward
     bodyKey: skill.cleric.ward.body
-    position: {x: 0.5, y: 0.64}
+    position: {x: 0.5, y: 0.42}
     links:
     - core
+    - charge
+    - triage
     revealEvent: 
-    effectId: 
-    cost: 1
+    effect: 0
+    amount: 0
+    cost: 20
+    root: 0
+  - id: charge
+    titleKey: skill.cleric.charge
+    bodyKey: skill.cleric.charge.body
+    position: {x: 0.22, y: 0.68}
+    links:
+    - ward
+    - fourth
+    revealEvent: 
+    effect: 0
+    amount: 0
+    spell: {fileID: 11400000, guid: c4d5e6f708192a3b4c5d6e7f8091aa11, type: 2}
+    cost: 30
+    root: 0
+  - id: triage
+    titleKey: skill.cleric.triage
+    bodyKey: skill.cleric.triage.body
+    position: {x: 0.78, y: 0.68}
+    links:
+    - ward
+    - fourth
+    revealEvent: 
+    effect: 0
+    amount: 0
+    spell: {fileID: 11400000, guid: c4d5e6f708192a3b4c5d6e7f8091aa22, type: 2}
+    cost: 30
+    root: 0
+  - id: fourth
+    titleKey: skill.cleric.fourth
+    bodyKey: skill.cleric.fourth.body
+    position: {x: 0.5, y: 0.92}
+    links:
+    - charge
+    - triage
+    revealEvent: 
+    effect: 0
+    amount: 0
+    cost: 40
     root: 0

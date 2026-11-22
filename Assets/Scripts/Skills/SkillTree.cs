@@ -1,6 +1,16 @@
 using System;
 using UnityEngine;
 
+public enum SkillEffectKind
+{
+    None,
+    Damage,
+    MoveSpeed,
+    Range,
+    Health,
+    Interval
+}
+
 [Serializable]
 public class SkillNode
 {
@@ -10,8 +20,11 @@ public class SkillNode
     public Vector2 position;
     public string[] links;
     public string revealEvent;
-    public string effectId;
-    public int cost = 1;
+    public SkillEffectKind effect;
+    public float amount;
+    public SpellData spell;
+    [Tooltip("Gold price. The root stays free.")]
+    public int cost = 25;
     public bool root;
 }
 

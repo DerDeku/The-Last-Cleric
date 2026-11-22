@@ -24,11 +24,20 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        State = GameState.Menu;
+        SetState(GameState.Menu);
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     public void SetState(GameState state)
     {
         State = state;
+        Time.timeScale = state == GameState.Menu ? 0f : 1f;
+        if (state == GameState.Menu)
+            SpellSounds.Stop();
     }
 }

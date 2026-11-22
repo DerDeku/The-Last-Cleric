@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a488c080e2314459607e24e80f0580, type: 3}
   m_Name: Periodic Heal
   m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  id: periodic
   spellName: Heal
   kind: 0
   radius: 1

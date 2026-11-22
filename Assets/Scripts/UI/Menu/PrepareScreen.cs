@@ -5,18 +5,28 @@ public class PrepareScreen : IMenuScreen
     int section;
     int heroIndex;
     string selectedNode;
+    int equipSlot = 1;
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+    bool debugOpen;
+#endif
 
     public void Draw(MenuHost host)
     {
         PrepareRoster roster = host.Roster;
-        GUILayout.BeginArea(new Rect(24f, 20f, 220f, Screen.height - 40f));
-        GUILayout.Label(Loc.Text("prepare.title"), MenuText.Title());
-        GUILayout.Space(16f);
-        if (GUILayout.Button(Loc.Text("prepare.heroes"), GUILayout.Height(40f)))
-            section = 0;
+        GUILayout.BeginArea(new Rect(24f, 20f, 240f, Screen.height - 40f));
+        DrawWaves();
+        GUILayout.Space(8f);
+        GUILayout.Label(Loc.Format("prepare.gold", SaveGame.GoldText), MenuText.Body());
+        GUILayout.Space(12f);
         if (GUILayout.Button(Loc.Text("prepare.cleric"), GUILayout.Height(40f)))
             section = 1;
+        if (GUILayout.Button(Loc.Text("prepare.heroes"), GUILayout.Height(40f)))
+            section = 0;
         GUILayout.FlexibleSpace();
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (GUILayout.Button(debugOpen ? "Debug schließen" : "Debug", GUILayout.Height(28f)))
+            debugOpen = !debugOpen;
+#endif
         if (GUILayout.Button(Loc.Text("menu.back"), GUILayout.Height(36f)))
             host.ShowMain();
         bool canStart = Profile.ActiveCount(roster) > 0;
@@ -28,11 +38,39 @@ public class PrepareScreen : IMenuScreen
             DrawHeroes(roster);
         else
             DrawCleric(roster);
+
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        if (debugOpen)
+            DebugMenu.Draw(roster);
+#endif
+    }
+
+    static void DrawWaves()
+    {
+        WaveManager manager = Object.FindAnyObjectByType<WaveManager>();
+        WaveTable table = manager != null ? manager.WaveTable : null;
+        int count = CampaignProgress.ChapterCount(table);
+        if (count == 0)
+            return;
+
+        int selected = CampaignProgress.SelectedChapter(table);
+        Color previous = GUI.backgroundColor;
+        for (int i = 0; i < count; i++)
+        {
+            if (!CampaignProgress.ChapterOpen(table, i))
+                continue;
+
+            GUI.backgroundColor = i == selected ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
+            if (GUILayout.Button(Loc.Format("prepare.wave", i + 1, 1), GUILayout.Height(28f)))
+                CampaignProgress.SelectChapter(table, i);
+        }
+
+        GUI.backgroundColor = previous;
     }
 
     void DrawHeroes(PrepareRoster roster)
     {
-        var list = new Rect(250f, 28f, 160f, Screen.height - 56f);
+        var list = new Rect(280f, 28f, 160f, Screen.height - 56f);
         GUILayout.BeginArea(list);
         int partySize = roster != null ? Mathf.Max(1, roster.partySize) : 1;
         GUILayout.Label(Loc.Format("prepare.party", Profile.ActiveCount(roster), partySize), MenuText.Body());
@@ -61,8 +99,9 @@ public class PrepareScreen : IMenuScreen
             return;
         }
 
-        DrawTree(new Rect(430f, 28f, Screen.width - 460f, Screen.height - 120f), selected != null ? selected.tree : null);
-        var action = new Rect(430f, Screen.height - 72f, 220f, 40f);
+        string heroName = selected != null && !string.IsNullOrEmpty(selected.nameKey) ? Loc.Text(selected.nameKey) : null;
+        DrawTree(new Rect(460f, 28f, Screen.width - 490f, Screen.height - 120f), selected != null ? selected.tree : null, selected != null ? selected.unit : null, heroName);
+        var action = new Rect(460f, Screen.height - 72f, 220f, 40f);
         if (state == HeroState.Active && GUI.Button(action, Loc.Text("prepare.bench")))
             Profile.Deactivate(selected);
         if (state == HeroState.Unlocked && Profile.ActiveCount(roster) < partySize && GUI.Button(action, Loc.Text("prepare.bring")))
@@ -80,25 +119,35 @@ public class PrepareScreen : IMenuScreen
 
     void DrawCleric(PrepareRoster roster)
     {
-        SkillTree tree = roster != null && roster.cleric != null ? roster.cleric.tree : null;
-        DrawTree(new Rect(260f, 28f, Screen.width - 520f, Screen.height - 56f), tree);
+        RosterEntry cleric = roster != null ? roster.cleric : null;
+        SkillTree tree = cleric != null ? cleric.tree : null;
+        DrawTree(new Rect(280f, 28f, Screen.width - 540f, Screen.height - 56f), tree, cleric != null ? cleric.unit : null, Loc.Text("prepare.cleric"));
 
-        GUILayout.BeginArea(new Rect(Screen.width - 240f, 28f, 210f, Screen.height - 56f));
+        GUILayout.BeginArea(new Rect(Screen.width - 250f, 28f, 220f, Screen.height - 56f));
         GUILayout.Label(Loc.Text("prepare.spells"), MenuText.Body());
-        SpellData[] spells = roster != null ? roster.spells : null;
-        if (spells != null)
+        Color previous = GUI.backgroundColor;
+        for (int slot = 1; slot <= 4; slot++)
         {
-            foreach (SpellData spell in spells)
-            {
-                if (spell == null)
-                    continue;
-                GUILayout.Label(Loc.Text("spell." + spell.kind), MenuText.Body());
-            }
+            bool open = Profile.IsSpellSlotEnabled(slot);
+            SpellData equipped = open ? SpellBook.Equipped(slot) : null;
+            string name = !open ? Loc.Text("hotbar.locked") : equipped == null ? Loc.Text("hotbar.empty") : Loc.Text("spell." + equipped.kind);
+            GUI.backgroundColor = slot == equipSlot ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
+            if (GUILayout.Button(slot + "  " + name, GUILayout.Height(32f)) && open)
+                equipSlot = slot;
         }
+
+        GUI.backgroundColor = previous;
+        GUILayout.Space(12f);
+        foreach (SpellData spell in SpellBook.Known(roster))
+        {
+            if (GUILayout.Button(Loc.Text("spell." + spell.kind), GUILayout.Height(32f)))
+                SpellBook.Equip(equipSlot, spell);
+        }
+
         GUILayout.EndArea();
     }
 
-    void DrawTree(Rect panel, SkillTree tree)
+    void DrawTree(Rect panel, SkillTree tree, UnitDefinition definition, string headline)
     {
         GUI.Box(panel, GUIContent.none);
         if (tree == null || tree.nodes == null)
@@ -109,6 +158,9 @@ public class PrepareScreen : IMenuScreen
 
         DrawEdges(panel, tree);
         SkillNode selected = SkillRules.Find(tree, selectedNode);
+        if (selected == null || !SkillRules.IsVisible(tree, selected))
+            selected = FindRoot(tree);
+        SkillNode hovered = null;
         foreach (SkillNode node in tree.nodes)
         {
             if (!SkillRules.IsVisible(tree, node))
@@ -117,19 +169,63 @@ public class PrepareScreen : IMenuScreen
             Rect rect = NodeRect(panel, node);
             bool unlocked = SkillRules.IsUnlocked(tree, node);
             GUI.color = unlocked ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
-            if (GUI.Button(rect, Loc.Text(node.titleKey)))
+            string title = Loc.Text(node.titleKey);
+            if (!unlocked && node.cost > 0)
+                title += " (" + node.cost + ")";
+            if (GUI.Button(rect, title))
                 selectedNode = node.id;
+            string mark = SkillText.Mark(node);
+            if (mark.Length > 0)
+                GUI.Label(new Rect(rect.x + 4f, rect.y + 2f, rect.width - 8f, 16f), mark, MenuText.Mark());
             GUI.color = Color.white;
+            if (rect.Contains(Event.current.mousePosition))
+                hovered = node;
         }
 
-        if (selected == null || !SkillRules.IsVisible(tree, selected))
-            return;
+        if (selected != null && SkillRules.IsVisible(tree, selected))
+        {
+            float textY = panel.yMax - 156f;
+            GUI.Label(new Rect(panel.x + 16f, textY + 22f, panel.width - 180f, 126f), SkillText.Describe(tree, selected, definition, headline), MenuText.Wrap());
+            var buy = new Rect(panel.xMax - 168f, textY + 28f, 148f, 36f);
+            if (SkillRules.CanBuy(tree, selected) && GUI.Button(buy, Loc.Text("prepare.unlock")))
+                Profile.TrySpend(tree.id, selected.id, selected.cost);
+        }
 
-        float textY = panel.yMax - 110f;
-        GUI.Label(new Rect(panel.x + 16f, textY, panel.width - 32f, 24f), Loc.Format("prepare.points", Profile.Points(tree.id)), MenuText.Body());
-        GUI.Label(new Rect(panel.x + 16f, textY + 24f, panel.width - 180f, 48f), Loc.Text(selected.bodyKey), MenuText.Body());
-        if (SkillRules.CanBuy(tree, selected) && GUI.Button(new Rect(panel.xMax - 150f, textY + 28f, 130f, 36f), Loc.Text("prepare.unlock")))
-            Profile.TrySpend(tree.id, selected.id, selected.cost);
+        if (hovered != null && Event.current.type == EventType.Repaint)
+            DrawPopup(hovered, tree, definition, headline);
+    }
+
+    static SkillNode FindRoot(SkillTree tree)
+    {
+        if (tree == null || tree.nodes == null)
+            return null;
+
+        foreach (SkillNode node in tree.nodes)
+        {
+            if (node != null && node.root)
+                return node;
+        }
+
+        return null;
+    }
+
+    static void DrawPopup(SkillNode node, SkillTree tree, UnitDefinition definition, string headline)
+    {
+        string text = Loc.Text(node.titleKey) + "\n" + SkillText.Describe(tree, node, definition, headline);
+        var style = MenuText.Wrap();
+        float width = 280f;
+        float height = style.CalcHeight(new GUIContent(text), width - 16f) + 16f;
+        Vector2 mouse = Event.current.mousePosition;
+        var box = new Rect(mouse.x + 18f, mouse.y + 18f, width, height);
+        if (box.xMax > Screen.width)
+            box.x = mouse.x - width - 12f;
+        if (box.yMax > Screen.height)
+            box.y = Screen.height - height - 8f;
+
+        GUI.color = new Color(0.08f, 0.09f, 0.1f, 0.96f);
+        GUI.DrawTexture(box, Texture2D.whiteTexture);
+        GUI.color = Color.white;
+        GUI.Label(new Rect(box.x + 8f, box.y + 8f, width - 16f, height - 12f), text, style);
     }
 
     static void DrawEdges(Rect panel, SkillTree tree)
@@ -161,7 +257,7 @@ public class PrepareScreen : IMenuScreen
     static Vector2 NodeCenter(Rect panel, SkillNode node)
     {
         float x = Mathf.Lerp(panel.x + 70f, panel.xMax - 70f, Mathf.Clamp01(node.position.x));
-        float y = Mathf.Lerp(panel.y + 50f, panel.yMax - 150f, Mathf.Clamp01(node.position.y));
+        float y = Mathf.Lerp(panel.y + 50f, panel.yMax - 190f, Mathf.Clamp01(node.position.y));
         return new Vector2(x, y);
     }
 

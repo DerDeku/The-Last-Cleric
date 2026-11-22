@@ -33,32 +33,86 @@ public class WaveManager : MonoBehaviour
 
     IEnumerator RunWaves()
     {
-        while (GameManager.Instance == null || GameManager.Instance.State != GameState.Playing)
-            yield return null;
-
-        if (waveTable == null || waveTable.waves == null)
+        while (true)
         {
-            Debug.LogWarning("WaveManager hat keine WaveTable.");
-            yield break;
+            while (GameManager.Instance == null || GameManager.Instance.State != GameState.Playing)
+                yield return null;
+
+            if (waveTable == null || waveTable.waves == null || waveTable.waves.Length == 0)
+            {
+                Debug.LogWarning("WaveManager hat keine WaveTable.");
+                ReturnToPrepare();
+                continue;
+            }
+
+            int index = CampaignProgress.Selected(waveTable);
+            int chapterNumber;
+            int waveNumber;
+            CampaignProgress.Locate(waveTable, index, out chapterNumber, out waveNumber);
+            int chapter = chapterNumber - 1;
+            int end = CampaignProgress.ChapterStart(waveTable, chapter) + CampaignProgress.ChapterLength(waveTable, chapter);
+            end = Mathf.Min(end, waveTable.waves.Length);
+            bool cleared = index < end;
+            for (int i = index; i < end; i++)
+            {
+                yield return RunWave(waveTable.waves[i]);
+                if (!AnyHeroAlive())
+                {
+                    cleared = false;
+                    break;
+                }
+
+                if (i < end - 1 && waveTable.timeBetweenWaves > 0f)
+                    yield return new WaitForSeconds(waveTable.timeBetweenWaves);
+            }
+
+            CampaignProgress.NoteChapter(waveTable, chapter, cleared);
+            ReturnToPrepare();
+        }
+    }
+
+    void ReturnToPrepare()
+    {
+        for (int i = 0; i < alive.Count; i++)
+        {
+            if (alive[i] != null)
+                Destroy(alive[i].gameObject);
         }
 
-        foreach (WaveDefinition wave in waveTable.waves)
+        alive.Clear();
+        foreach (Enemy enemy in FindObjectsByType<Enemy>())
         {
-            if (!AnyHeroAlive())
-                break;
-
-            yield return RunWave(wave);
-
-            if (!AnyHeroAlive())
-                break;
-
-            yield return new WaitForSeconds(waveTable.timeBetweenWaves);
+            if (enemy != null)
+                Destroy(enemy.gameObject);
         }
 
-        if (GameManager.Instance == null)
-            yield break;
+        foreach (Projectile arrow in FindObjectsByType<Projectile>())
+        {
+            if (arrow != null)
+                Destroy(arrow.gameObject);
+        }
 
-        GameManager.Instance.SetState(AnyHeroAlive() ? GameState.Victory : GameState.GameOver);
+        foreach (HitFeedback hit in FindObjectsByType<HitFeedback>())
+        {
+            if (hit != null)
+                Destroy(hit.gameObject);
+        }
+
+        foreach (Hero hero in FindObjectsByType<Hero>())
+        {
+            if (hero != null)
+                hero.ResetForMenu();
+        }
+
+        PrepareRoster roster = MenuHost.Instance != null ? MenuHost.Instance.Roster : Resources.Load<PrepareRoster>("Menu/Roster");
+        Profile.PlaceParty(roster);
+        ClericAvatar.EnsureBehindRanger();
+        if (SpellController.Instance != null)
+            SpellController.Instance.ResetBattle();
+        if (MenuHost.Instance != null)
+            MenuHost.Instance.ShowPrepare();
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetState(GameState.Menu);
     }
 
     IEnumerator RunWave(WaveDefinition wave)

@@ -38,7 +38,7 @@ public static class SkillRules
     {
         if (!IsVisible(tree, node) || IsUnlocked(tree, node))
             return false;
-        return Profile.Points(tree.id) >= node.cost;
+        return SaveGame.Gold >= node.cost;
     }
 
     public static bool HasUnlockedNeighbor(SkillTree tree, SkillNode node)

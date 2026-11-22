@@ -9,7 +9,7 @@ public class MainMenuScreen : IMenuScreen
         GUILayout.Label(Loc.Text("menu.title"), Title());
         GUILayout.Space(28f);
         if (CenteredButton(Loc.Text("menu.play")))
-            host.ShowPrepare();
+            host.ShowSlots();
         if (CenteredButton(Loc.Text("menu.options")))
             host.ShowOptions();
         if (CenteredButton(Loc.Text("menu.quit")))

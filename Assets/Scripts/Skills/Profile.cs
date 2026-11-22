@@ -9,34 +9,31 @@ public enum HeroState
 
 public static class Profile
 {
-    const int StartingPoints = 2;
-
     public static bool IsEventDone(string eventId)
     {
         if (string.IsNullOrEmpty(eventId))
             return true;
-        return PlayerPrefs.GetInt(EventKey(eventId), 0) == 1;
+        return SaveGame.HasEvent(eventId);
     }
 
     public static void CompleteEvent(string eventId)
     {
-        if (string.IsNullOrEmpty(eventId))
-            return;
-        PlayerPrefs.SetInt(EventKey(eventId), 1);
-        PlayerPrefs.Save();
+        SaveGame.AddEvent(eventId);
     }
 
     public static bool IsNodeUnlocked(string treeId, string nodeId)
     {
-        return PlayerPrefs.GetInt(NodeKey(treeId, nodeId), 0) == 1;
+        return SaveGame.HasNode(treeId, nodeId);
     }
 
-    public static int Points(string treeId)
+    public static bool IsSpellSlotEnabled(int slot)
     {
-        string key = PointsKey(treeId);
-        if (!PlayerPrefs.HasKey(key))
-            return StartingPoints;
-        return PlayerPrefs.GetInt(key, 0);
+        PrepareRoster roster = Resources.Load<PrepareRoster>("Menu/Roster");
+        if (roster == null || slot != roster.lockedSlot)
+            return true;
+        if (roster.cleric == null || roster.cleric.tree == null || string.IsNullOrEmpty(roster.lockedNode))
+            return false;
+        return IsNodeUnlocked(roster.cleric.tree.id, roster.lockedNode);
     }
 
     public static HeroState HeroStateOf(RosterEntry entry)
@@ -79,6 +76,22 @@ public static class Profile
         SetHeroActive(entry, false);
     }
 
+    public static void BenchForEvent(string eventId)
+    {
+        if (string.IsNullOrEmpty(eventId))
+            return;
+
+        PrepareRoster roster = Resources.Load<PrepareRoster>("Menu/Roster");
+        if (roster == null || roster.heroes == null)
+            return;
+
+        foreach (RosterEntry entry in roster.heroes)
+        {
+            if (entry != null && entry.unlockEvent == eventId)
+                SaveGame.SetHero(entry.id, false);
+        }
+    }
+
     public static void PlaceParty(PrepareRoster roster)
     {
         Hero[] heroes = Object.FindObjectsByType<Hero>();
@@ -103,47 +116,23 @@ public static class Profile
 
     static bool IsHeroActive(RosterEntry entry)
     {
-        string key = HeroKey(entry.id);
-        if (!PlayerPrefs.HasKey(key))
+        bool active;
+        if (!SaveGame.TryHero(entry.id, out active))
             return entry.startsActive;
-        return PlayerPrefs.GetInt(key, 0) == 1;
+        return active;
     }
 
     static void SetHeroActive(RosterEntry entry, bool active)
     {
-        PlayerPrefs.SetInt(HeroKey(entry.id), active ? 1 : 0);
-        PlayerPrefs.Save();
-    }
-
-    static string HeroKey(string id)
-    {
-        return "profile.hero.active." + id;
+        SaveGame.SetHero(entry.id, active);
     }
 
     public static bool TrySpend(string treeId, string nodeId, int cost)
     {
-        int points = Points(treeId);
-        if (points < cost || IsNodeUnlocked(treeId, nodeId))
+        if (IsNodeUnlocked(treeId, nodeId) || !SaveGame.TrySpendGold(cost))
             return false;
 
-        PlayerPrefs.SetInt(PointsKey(treeId), points - Mathf.Max(0, cost));
-        PlayerPrefs.SetInt(NodeKey(treeId, nodeId), 1);
-        PlayerPrefs.Save();
+        SaveGame.AddNode(treeId, nodeId);
         return true;
-    }
-
-    static string EventKey(string eventId)
-    {
-        return "profile.event." + eventId;
-    }
-
-    static string NodeKey(string treeId, string nodeId)
-    {
-        return "profile.node." + treeId + "." + nodeId;
-    }
-
-    static string PointsKey(string treeId)
-    {
-        return "profile.points." + treeId;
     }
 }

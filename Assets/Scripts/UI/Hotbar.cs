@@ -27,21 +27,35 @@ public class Hotbar : MonoBehaviour
         {
             int slot = i + 1;
             var rect = new Rect(x + i * (slotWidth + gap), y, slotWidth, 62f);
-            bool selected = spells.SelectedSlot == slot;
-            GUI.color = selected ? new Color(0.95f, 0.82f, 0.25f, 0.95f) : new Color(0.12f, 0.12f, 0.12f, 0.82f);
+            bool locked = !Profile.IsSpellSlotEnabled(slot);
+            bool selected = spells.SelectedSlot == slot && !locked;
+            if (locked)
+                GUI.color = new Color(0.08f, 0.08f, 0.08f, 0.55f);
+            else if (selected)
+                GUI.color = new Color(0.95f, 0.82f, 0.25f, 0.95f);
+            else
+                GUI.color = new Color(0.12f, 0.12f, 0.12f, 0.82f);
             GUI.DrawTexture(rect, Texture2D.whiteTexture);
 
             SpellData spell = spells.GetSlot(slot);
-            string name = spell == null ? Loc.Text("hotbar.empty") : Loc.Text("spell." + spell.kind);
-            float cooldown = spells.CooldownRemaining(slot);
-            bool waiting = spells.IsWaiting(slot) && cooldown > 0.05f;
-            string timer = cooldown > 0.05f ? cooldown.ToString("0.0") : Loc.Text("hotbar.ready");
-            if (waiting)
-                timer = Loc.Text("hotbar.waiting");
-            if (spell == null)
-                timer = "";
+            string name = Loc.Text("hotbar.empty");
+            if (locked)
+                name = Loc.Text("hotbar.locked");
+            else if (spell != null)
+                name = Loc.Text("spell." + spell.kind);
 
-            GUI.color = Color.white;
+            float cooldown = spells.CooldownRemaining(slot);
+            string timer = "";
+            if (!locked && spell != null)
+            {
+                timer = cooldown > 0.05f ? cooldown.ToString("0.0") : Loc.Text("hotbar.ready");
+                if (spells.IsWaiting(slot))
+                    timer = Loc.Text("hotbar.waiting");
+                else if (spells.IsQueued(slot))
+                    timer = Loc.Text("hotbar.queue");
+            }
+
+            GUI.color = locked ? new Color(0.65f, 0.65f, 0.65f, 1f) : Color.white;
             GUI.Label(rect, slot + "\n" + name + "\n" + timer, labelStyle);
         }
 

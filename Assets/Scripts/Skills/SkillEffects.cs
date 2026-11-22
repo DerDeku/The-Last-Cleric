@@ -24,31 +24,34 @@ public static class SkillEffects
 
             foreach (SkillNode node in entry.tree.nodes)
             {
-                if (node == null || string.IsNullOrEmpty(node.effectId) || !SkillRules.IsUnlocked(entry.tree, node))
+                if (node == null || node.effect == SkillEffectKind.None || !SkillRules.IsUnlocked(entry.tree, node))
                     continue;
-                Apply(hero, node.effectId);
+                Apply(hero, node);
             }
         }
     }
 
-    public static void Apply(Unit unit, string effectId)
+    public static void Apply(Unit unit, SkillNode node)
     {
-        if (unit == null || string.IsNullOrEmpty(effectId))
+        if (unit == null || node == null)
             return;
 
-        switch (effectId)
+        switch (node.effect)
         {
-            case "fighter.guard":
-                unit.AddBonusContactDamage(2);
+            case SkillEffectKind.Damage:
+                unit.AddBonusContactDamage(Mathf.RoundToInt(node.amount));
                 break;
-            case "fighter.step":
-                unit.AddBonusMoveSpeed(0.25f);
+            case SkillEffectKind.MoveSpeed:
+                unit.AddBonusMoveSpeed(node.amount);
                 break;
-            case "fighter.reach":
-                unit.AddBonusAttackRange(0.15f);
+            case SkillEffectKind.Range:
+                unit.AddBonusAttackRange(node.amount);
                 break;
-            case "ranger.aim":
-                unit.AddBonusAttackRange(0.5f);
+            case SkillEffectKind.Health:
+                unit.AddBonusMaxHealth(Mathf.RoundToInt(node.amount));
+                break;
+            case SkillEffectKind.Interval:
+                unit.AddBonusAttackInterval(node.amount);
                 break;
         }
     }

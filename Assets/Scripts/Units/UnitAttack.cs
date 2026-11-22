@@ -16,6 +16,14 @@ public class UnitAttack : MonoBehaviour
         chargeBar = AttackChargeBar.Attach(self);
     }
 
+    public void ResetCharge()
+    {
+        progress = 0f;
+        looseTime = 0f;
+        if (chargeBar != null)
+            chargeBar.SetVisible(false);
+    }
+
     void Update()
     {
         if (self == null || !self.IsAlive || !self.IsDeployed || self.ContactDamage <= 0)

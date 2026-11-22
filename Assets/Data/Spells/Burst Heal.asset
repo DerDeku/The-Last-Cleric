@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 55a488c080e2314459607e24e80f0580, type: 3}
   m_Name: Burst Heal
   m_EditorClassIdentifier: Assembly-CSharp::SpellData
+  id: burst
   spellName: Burst
   kind: 1
   radius: 1.2

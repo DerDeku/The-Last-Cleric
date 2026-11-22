@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(10)]
@@ -13,24 +14,43 @@ public class SpellController : MonoBehaviour
 
     float tickTimer;
     int selectedSlot = 1;
-    int queuedSlot;
+    readonly List<int> chain = new List<int>();
+    int armedSlot;
     SpellData casting;
     int castingSlot;
     float castTimer;
+    bool holding;
+    bool waitRelease;
+    float holdTimer;
+    SpellData holdSpell;
     AudioSource audio;
 
     public int SelectedSlot => selectedSlot;
-    public bool IsWaiting(int slot) => queuedSlot == slot;
+    public bool IsWaiting(int slot) => armedSlot == slot && CooldownRemaining(slot) > 0f;
+    public bool IsQueued(int slot) => chain.Contains(slot);
     public Vector2 WorldCursor { get; private set; }
 
     public float CastFill
     {
         get
         {
+                if (holding && holdSpell != null && holdSpell.maxHold > 0f)
+                return Mathf.Clamp01(holdTimer / holdSpell.maxHold);
             if (casting == null || casting.castTime <= 0f)
                 return 0f;
             return Mathf.Clamp01(castTimer / casting.castTime);
         }
+    }
+
+    public int PreviewHeal(Unit unit)
+    {
+        if (!holding || holdSpell == null || unit == null || holdSpell.maxHold <= 0f)
+            return 0;
+
+        int amount = Mathf.RoundToInt(holdSpell.power * Mathf.Clamp01(holdTimer / holdSpell.maxHold));
+        if (amount <= 0 || !HealEffect.Hits(WorldCursor, holdSpell.radius, unit))
+            return 0;
+        return Mathf.Min(amount, Mathf.Max(0, unit.MaxHealth - unit.Health));
     }
 
     public SpellData Selected => GetSlot(selectedSlot);
@@ -71,16 +91,24 @@ public class SpellController : MonoBehaviour
 
     void Update()
     {
+        if (GameManager.Instance == null || GameManager.Instance.State != GameState.Playing)
+            return;
+
         UpdateWorldCursor();
         TickCooldowns();
         ReadHotkey();
-        CastQueued();
         TickCast();
+        TickHold();
+        PromoteChain();
         TickPeriodicHeal();
     }
 
     public SpellData GetSlot(int slot)
     {
+        SpellData equipped = SpellBook.Equipped(slot);
+        if (equipped != null || SaveGame.HasLoadout)
+            return equipped;
+
         switch (slot)
         {
             case 1: return periodicHeal;
@@ -126,40 +154,90 @@ public class SpellController : MonoBehaviour
         if (hotkey < 1 || hotkey > 4)
             return;
 
-        selectedSlot = hotkey;
+        if (!Profile.IsSpellSlotEnabled(hotkey))
+            return;
+
         SpellData spell = GetSlot(hotkey);
-        if (spell == null || spell.kind == SpellKind.PeriodicHeal)
+        if (spell != null && spell.kind == SpellKind.PeriodicHeal)
         {
-            queuedSlot = 0;
+            selectedSlot = hotkey;
+            chain.Clear();
+            armedSlot = 0;
+            CancelHold();
             CancelCast();
             return;
         }
+
+        if (spell != null && spell.kind == SpellKind.ChargedHeal)
+        {
+            selectedSlot = hotkey;
+            chain.Clear();
+            armedSlot = 0;
+            CancelCast();
+            return;
+        }
+
+        if (spell == null)
+        {
+            if (hotkey == 4 && casting == null && chain.Count == 0 && !holding)
+                selectedSlot = 4;
+            return;
+        }
+
+        selectedSlot = hotkey;
+        if (casting != null && castingSlot == hotkey)
+            return;
 
         if (CooldownRemaining(hotkey) > 0f)
         {
-            queuedSlot = hotkey;
-            CancelCast();
+            armedSlot = hotkey;
             return;
         }
 
-        queuedSlot = 0;
+        if (armedSlot == hotkey)
+            armedSlot = 0;
+        if (chain.Contains(hotkey))
+            return;
+
+        bool busy = casting != null || chain.Count > 0;
+        if (GameSettings.ChainCasting && busy)
+        {
+            chain.Add(hotkey);
+            return;
+        }
+
+        CancelCast();
+        chain.Clear();
         BeginCast(hotkey);
     }
 
-    void CastQueued()
+    void PromoteChain()
     {
-        if (queuedSlot < 1 || selectedSlot != queuedSlot || CooldownRemaining(queuedSlot) > 0f)
+        if (casting != null)
             return;
 
-        int slot = queuedSlot;
-        queuedSlot = 0;
-        BeginCast(slot);
+        while (chain.Count > 0)
+        {
+            int slot = chain[0];
+            chain.RemoveAt(0);
+            if (CooldownRemaining(slot) > 0f)
+                continue;
+            BeginCast(slot);
+            return;
+        }
+
+        if (armedSlot == 0 || CooldownRemaining(armedSlot) > 0f)
+            return;
+
+        int armed = armedSlot;
+        armedSlot = 0;
+        BeginCast(armed);
     }
 
     void BeginCast(int slot)
     {
         SpellData spell = GetSlot(slot);
-        if (spell == null || spell.kind == SpellKind.PeriodicHeal || CooldownRemaining(slot) > 0f)
+        if (spell == null || spell.kind == SpellKind.PeriodicHeal || spell.kind == SpellKind.ChargedHeal || CooldownRemaining(slot) > 0f)
             return;
 
         if (spell.castTime <= 0f)
@@ -192,6 +270,80 @@ public class SpellController : MonoBehaviour
     {
         casting = null;
         castTimer = 0f;
+    }
+
+    public void ResetBattle()
+    {
+        for (int i = 0; i < cooldownRemaining.Length; i++)
+            cooldownRemaining[i] = 0f;
+        tickTimer = 0f;
+        selectedSlot = 1;
+        chain.Clear();
+        armedSlot = 0;
+        CancelCast();
+        CancelHold();
+    }
+
+    void CancelHold()
+    {
+        holding = false;
+        holdTimer = 0f;
+        holdSpell = null;
+        waitRelease = false;
+    }
+
+    void TickHold()
+    {
+        if (InputManager.Instance == null)
+            return;
+
+        if (waitRelease)
+        {
+            if (!InputManager.Instance.IsHeld(selectedSlot))
+                waitRelease = false;
+            return;
+        }
+
+        SpellData spell = Selected;
+        bool down = spell != null
+            && spell.kind == SpellKind.ChargedHeal
+            && InputManager.Instance.IsHeld(selectedSlot)
+            && CooldownRemaining(selectedSlot) <= 0f
+            && casting == null;
+
+        if (!down)
+        {
+            if (holding)
+                ReleaseHold(holdTimer >= 0.2f);
+            return;
+        }
+
+        holding = true;
+        holdSpell = spell;
+        float max = Mathf.Max(0.05f, spell.maxHold);
+        holdTimer = Mathf.Min(max, holdTimer + Time.deltaTime);
+        if (holdTimer >= max - 0.0001f)
+            ReleaseHold(true);
+    }
+
+    void ReleaseHold(bool cast)
+    {
+        SpellData spell = holdSpell;
+        float held = holdTimer;
+        int slot = selectedSlot;
+        CancelHold();
+        waitRelease = true;
+        if (!cast || spell == null)
+            return;
+
+        float max = Mathf.Max(0.05f, spell.maxHold);
+        int amount = Mathf.RoundToInt(spell.power * Mathf.Clamp01(held / max));
+        if (amount <= 0)
+            return;
+
+        HealEffect.HealFriends(WorldCursor, spell.radius, amount);
+        SpellSounds.Play(spell.kind);
+        cooldownRemaining[slot - 1] = Mathf.Max(0f, spell.cooldown);
     }
 
     void FinishCast(SpellData spell, int slot)
@@ -228,10 +380,20 @@ public class SpellController : MonoBehaviour
     {
         if (spell.kind == SpellKind.Shield)
             HealEffect.ShieldFriends(WorldCursor, spell.radius, spell.power);
+        else if (spell.kind == SpellKind.TriageHeal)
+            HealEffect.HealFriends(WorldCursor, spell.radius, unit => TriageAmount(spell, unit));
         else
             HealEffect.HealFriends(WorldCursor, spell.radius, spell.power);
 
         SpellSounds.Play(spell.kind);
+    }
+
+    static int TriageAmount(SpellData spell, Unit unit)
+    {
+        int amount = spell.power;
+        if (unit != null && unit.MaxHealth > 0 && (float)unit.Health / unit.MaxHealth < spell.bonusHealth)
+            amount += Mathf.RoundToInt(spell.power * spell.bonusBelow);
+        return amount;
     }
 
     void UpdateWorldCursor()

@@ -30,3 +30,4 @@ MonoBehaviour:
   healthBarColor: {r: 0.62, g: 0.3, b: 0.9, a: 1}
   targetLine: 1
   holdPosition: 0
+  goldDrop: 8

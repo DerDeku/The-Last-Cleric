@@ -7,6 +7,23 @@ public static class HealEffect
         AffectFriends(center, radius, unit => unit.Heal(power));
     }
 
+    public static void HealFriends(Vector2 center, float radius, System.Func<Unit, int> amount)
+    {
+        AffectFriends(center, radius, unit =>
+        {
+            int heal = amount != null ? amount(unit) : 0;
+            if (heal > 0)
+                unit.Heal(heal);
+        });
+    }
+
+    public static bool Hits(Vector2 center, float radius, Unit unit)
+    {
+        if (unit == null || radius < 0f)
+            return false;
+        return Covers(center, radius * radius, unit);
+    }
+
     public static void ShieldFriends(Vector2 center, float radius, int power)
     {
         AffectFriends(center, radius, unit => unit.AddShield(power));

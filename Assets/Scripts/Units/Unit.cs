@@ -25,6 +25,7 @@ public class Unit : MonoBehaviour
     float attackMoveMultiplier;
 
     public UnitDefinition Definition => definition;
+    public int GoldDrop => definition != null ? Mathf.Max(0, definition.goldDrop) : 0;
     public UnitTeam Team => team;
     public AttackShape AttackShape => attackShape;
     public AreaForm AreaForm => areaForm;
@@ -103,6 +104,10 @@ public class Unit : MonoBehaviour
         bonusAttackRange = 0f;
         bonusAttackInterval = 0f;
         Health = MaxHealth;
+        Shield = 0;
+        shieldIdle = 0f;
+        shieldDrain = 0f;
+        shieldFading = false;
 
         if (!string.IsNullOrEmpty(source.displayName))
             gameObject.name = source.displayName;

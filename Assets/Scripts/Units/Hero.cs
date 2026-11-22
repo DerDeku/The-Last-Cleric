@@ -87,4 +87,17 @@ public class Hero : Unit
 
         enabled = false;
     }
+
+    public void ResetForMenu()
+    {
+        enabled = true;
+        if (Definition != null)
+            ApplyDefinition(Definition);
+        transform.position = anchor;
+        focus = null;
+        SetAttackFocus(null);
+        UnitAttack attack = GetComponent<UnitAttack>();
+        if (attack != null)
+            attack.ResetCharge();
+    }
 }

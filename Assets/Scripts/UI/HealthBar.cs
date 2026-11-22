@@ -16,7 +16,9 @@ public class HealthBar : MonoBehaviour
     Transform healthFill;
     Transform shieldFill;
     Transform overflowFill;
+    Transform previewFill;
     SpriteRenderer shieldRenderer;
+    SpriteRenderer previewRenderer;
     SpriteRenderer overflowRenderer;
     GameObject lifeMark;
 
@@ -32,7 +34,9 @@ public class HealthBar : MonoBehaviour
         bar.healthFill = CreatePiece(root.transform, "Health", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(LifeWidth, BarHeight, 1f), fillColor, 21);
         bar.shieldFill = CreatePiece(root.transform, "Shield", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(0f, BarHeight, 1f), ShieldOnLife, 22);
         bar.overflowFill = CreatePiece(root.transform, "Shield Extra", RuntimeSprites.SquareLeftPivot(), new Vector3(0.5f, 0f, 0f), new Vector3(0f, BarHeight, 1f), ShieldExtra, 22);
-        bar.lifeMark = CreatePiece(root.transform, "Life Mark", RuntimeSprites.Square(), new Vector3(0.5f, 0f, 0f), new Vector3(0.035f, 0.2f, 1f), new Color(1f, 1f, 1f, 0.8f), 23).gameObject;
+        bar.previewFill = CreatePiece(root.transform, "Preview", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(0f, BarHeight, 1f), new Color(0.78f, 1f, 0.55f, 0.9f), 24);
+        bar.previewRenderer = bar.previewFill.GetComponent<SpriteRenderer>();
+        bar.lifeMark = CreatePiece(root.transform, "Life Mark", RuntimeSprites.Square(), new Vector3(0.5f, 0f, 0f), new Vector3(0.035f, 0.2f, 1f), new Color(1f, 1f, 1f, 0.8f), 25).gameObject;
         bar.lifeMark.SetActive(false);
         bar.shieldRenderer = bar.shieldFill.GetComponent<SpriteRenderer>();
         bar.overflowRenderer = bar.overflowFill.GetComponent<SpriteRenderer>();
@@ -75,6 +79,22 @@ public class HealthBar : MonoBehaviour
 
         if (lifeMark != null)
             lifeMark.SetActive(extra > 0.001f);
+
+        int preview = 0;
+        SpellController spells = SpellController.Instance;
+        if (spells != null)
+            preview = spells.PreviewHeal(unit);
+        float gain = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)preview / unit.MaxHealth);
+        float room = Mathf.Max(0f, 1f - health);
+        float previewWidth = Mathf.Min(room, gain) * LifeWidth;
+        if (previewFill != null)
+        {
+            previewFill.localPosition = new Vector3(-0.5f + health * LifeWidth, 0f, 0f);
+            previewFill.localScale = new Vector3(previewWidth, BarHeight, 1f);
+        }
+
+        if (previewRenderer != null)
+            previewRenderer.enabled = previewWidth > 0.001f;
     }
 
     static Transform CreatePiece(Transform parent, string name, Sprite sprite, Vector3 localPosition, Vector3 localScale, Color color, int sortingOrder)

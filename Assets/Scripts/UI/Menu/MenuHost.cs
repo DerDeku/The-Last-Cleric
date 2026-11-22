@@ -4,11 +4,13 @@ using UnityEngine;
 public class MenuHost : MonoBehaviour
 {
     public static MenuHost Instance { get; private set; }
+    public static bool OpenPrepareOnLoad;
 
     PrepareRoster roster;
     IMenuScreen screen;
     readonly MainMenuScreen main = new MainMenuScreen();
     readonly OptionsScreen options = new OptionsScreen();
+    readonly SlotsScreen slots = new SlotsScreen();
     readonly PrepareScreen prepare = new PrepareScreen();
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -33,8 +35,16 @@ public class MenuHost : MonoBehaviour
         }
 
         Instance = this;
+        SaveGame.MigrateLegacy();
         roster = Resources.Load<PrepareRoster>("Menu/Roster");
-        screen = main;
+        screen = OpenPrepareOnLoad ? prepare : main;
+        OpenPrepareOnLoad = false;
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
     }
 
     void OnGUI()
@@ -52,14 +62,14 @@ public class MenuHost : MonoBehaviour
 
     public PrepareRoster Roster => roster;
 
-    public void ShowMain()
-    {
-        screen = main;
-    }
-
     public void ShowOptions()
     {
         screen = options;
+    }
+
+    public void ShowSlots()
+    {
+        screen = slots;
     }
 
     public void ShowPrepare()
@@ -67,8 +77,15 @@ public class MenuHost : MonoBehaviour
         screen = prepare;
     }
 
+    public void ShowMain()
+    {
+        SaveGame.Save();
+        screen = main;
+    }
+
     public void BeginBattle()
     {
+        SaveGame.Save();
         Profile.PlaceParty(roster);
         SkillEffects.ApplyRoster(roster);
         if (GameManager.Instance != null)

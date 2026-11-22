@@ -59,4 +59,5 @@ public class UnitDefinition : ScriptableObject
     public BattleLine targetLine = BattleLine.Frontline;
     public bool holdPosition = false;
     [Range(0f, 1f)] public float attackMoveMultiplier = 0f;
+    public int goldDrop;
 }
