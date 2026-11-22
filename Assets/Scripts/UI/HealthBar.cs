@@ -3,7 +3,9 @@ using UnityEngine;
 public class HealthBar : MonoBehaviour
 {
     Unit unit;
-    Transform fill;
+    Transform healthFill;
+    Transform shieldFill;
+    SpriteRenderer shieldRenderer;
 
     public static void Attach(Unit target, Color fillColor)
     {
@@ -13,18 +15,24 @@ public class HealthBar : MonoBehaviour
 
         var bar = root.AddComponent<HealthBar>();
         bar.unit = target;
-        CreatePiece(root.transform, "Background", RuntimeSprites.Square(), new Vector3(0f, 0f, 0f), new Vector3(1.2f, 0.18f, 1f), new Color(0.05f, 0.05f, 0.05f, 0.9f), 20);
-        bar.fill = CreatePiece(root.transform, "Fill", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(1f, 0.1f, 1f), fillColor, 21);
+        CreatePiece(root.transform, "Background", RuntimeSprites.Square(), new Vector3(0f, 0f, 0f), new Vector3(1.2f, 0.32f, 1f), new Color(0.05f, 0.05f, 0.05f, 0.9f), 20);
+        bar.healthFill = CreatePiece(root.transform, "Health", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, -0.06f, 0f), new Vector3(1f, 0.1f, 1f), fillColor, 21);
+        bar.shieldFill = CreatePiece(root.transform, "Shield", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0.08f, 0f), new Vector3(0f, 0.08f, 1f), new Color(0.35f, 0.7f, 1f, 0.5f), 22);
+        bar.shieldRenderer = bar.shieldFill.GetComponent<SpriteRenderer>();
     }
 
     void LateUpdate()
     {
-        if (unit == null || fill == null)
+        if (unit == null || healthFill == null)
             return;
 
-        float amount = unit.MaxHealth <= 0 ? 0f : (float)unit.Health / unit.MaxHealth;
-        amount = Mathf.Clamp01(amount);
-        fill.localScale = new Vector3(amount, 0.1f, 1f);
+        float health = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)unit.Health / unit.MaxHealth);
+        healthFill.localScale = new Vector3(health, 0.1f, 1f);
+
+        float shield = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)unit.Shield / unit.MaxHealth);
+        shieldFill.localScale = new Vector3(shield, 0.08f, 1f);
+        if (shieldRenderer != null)
+            shieldRenderer.enabled = shield > 0.001f;
     }
 
     static Transform CreatePiece(Transform parent, string name, Sprite sprite, Vector3 localPosition, Vector3 localScale, Color color, int sortingOrder)

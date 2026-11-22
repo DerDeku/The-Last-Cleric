@@ -34,6 +34,7 @@ public class Unit : MonoBehaviour
     public float AttackHeight => baseAttackHeight > 0f ? baseAttackHeight : AttackRange;
     public float AttackInterval => Mathf.Max(0.05f, baseAttackInterval + bonusAttackInterval);
     public int Health { get; private set; }
+    public int Shield { get; private set; }
     public bool IsAlive => Health > 0;
 
     protected virtual void Awake()
@@ -128,12 +129,34 @@ public class Unit : MonoBehaviour
         if (!IsAlive || amount <= 0)
             return;
 
+        int before = Health;
         Health = Mathf.Min(MaxHealth, Health + amount);
+        if (Health > before)
+            HealFeedback.Play(this);
+    }
+
+    public void AddShield(int amount)
+    {
+        if (!IsAlive || amount <= 0)
+            return;
+
+        Shield += amount;
+        HealFeedback.PlayShield(this);
     }
 
     public void Damage(int amount)
     {
         if (!IsAlive || amount <= 0)
+            return;
+
+        if (Shield > 0)
+        {
+            int absorbed = Mathf.Min(Shield, amount);
+            Shield -= absorbed;
+            amount -= absorbed;
+        }
+
+        if (amount <= 0)
             return;
 
         Health = Mathf.Max(0, Health - amount);

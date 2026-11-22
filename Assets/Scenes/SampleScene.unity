@@ -413,6 +413,9 @@ GameObject:
   - component: {fileID: 823450002}
   - component: {fileID: 823450003}
   - component: {fileID: 823450004}
+  - component: {fileID: 823450005}
+  - component: {fileID: 823450006}
+  - component: {fileID: 823450007}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -464,6 +467,45 @@ MonoBehaviour:
   spawnX: 8
   spawnYMin: -3.1
   spawnYMax: 3.1
+--- !u!114 &823450005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823450001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f9bd204999d5f0e41b0e4fc2483a3423, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::InputManager
+--- !u!114 &823450006
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823450001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b2c1d4e5f60718293a4b5c6d7e8f901, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SpellController
+  periodicHeal: {fileID: 11400000, guid: 7a1b0c2d3e4f5061728394a5b6c7d801, type: 2}
+  burstHeal: {fileID: 11400000, guid: 7a1b0c2d3e4f5061728394a5b6c7d802, type: 2}
+  shield: {fileID: 11400000, guid: 7a1b0c2d3e4f5061728394a5b6c7d803, type: 2}
+--- !u!114 &823450007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823450001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8c3d2e5f60718293a4b5c6d7e8f902ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Hotbar
 --- !u!1 &834560001
 GameObject:
   m_ObjectHideFlags: 0
