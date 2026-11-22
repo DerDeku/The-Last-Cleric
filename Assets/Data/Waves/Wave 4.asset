@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::WaveDefinition
   spawns:
   - unit: {fileID: 11400000, guid: 22bb33cc44dd55ee66ff778899001111, type: 2}
-    count: 3
+    count: 5
     spawnInterval: 0.4
   - unit: {fileID: 11400000, guid: 33cc44dd55ee66ff7788990011112222, type: 2}
     count: 1

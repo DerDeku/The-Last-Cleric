@@ -19,3 +19,9 @@ MonoBehaviour:
   - unit: {fileID: 11400000, guid: 33cc44dd55ee66ff7788990011112222, type: 2}
     count: 1
     spawnInterval: 0.4
+  - unit: {fileID: 11400000, guid: a1b0c2d3e4f5061728394a5b6c7d8e11, type: 2}
+    count: 1
+    spawnInterval: 0.4
+  - unit: {fileID: 11400000, guid: b2c1d3e4f5061728394a5b6c7d8e9f22, type: 2}
+    count: 1
+    spawnInterval: 0.4

@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
   displayName: Brute
   maxHealth: 28
-  moveSpeed: 1.05
-  contactDamage: 18
+  moveSpeed: 1.4
+  contactDamage: 25
   attackRange: 1.15
   attackHeight: 0
   attackInterval: 2.2
@@ -28,3 +28,6 @@ MonoBehaviour:
   shape: 1
   bodyColor: {r: 0.55, g: 0.08, b: 0.1, a: 1}
   healthBarColor: {r: 0.75, g: 0.15, b: 0.15, a: 1}
+  targetLine: 0
+  holdPosition: 0
+  attackMoveMultiplier: 0

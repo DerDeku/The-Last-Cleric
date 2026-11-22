@@ -32,11 +32,18 @@ public class Enemy : Unit
         if (!IsAlive)
             return;
 
-        if (targetUnit != null && targetUnit.IsAlive && !IsInAttackPosition(targetUnit))
+        targetUnit = BattleLines.Pick(TargetLine, this);
+        float speed = MoveSpeed;
+        if (targetUnit != null && targetUnit.IsAlive && IsInAttackPosition(targetUnit))
+            speed = AttackDelivery == AttackDelivery.Ranged && !targetUnit.CanHit(this)
+                ? MoveSpeed * AttackMoveMultiplier
+                : 0f;
+
+        if (targetUnit != null && targetUnit.IsAlive && speed > 0f)
         {
             Vector3 destination = targetUnit.transform.position;
             destination.z = transform.position.z;
-            transform.position = Vector3.MoveTowards(transform.position, destination, MoveSpeed * Time.deltaTime);
+            transform.position = Vector3.MoveTowards(transform.position, destination, speed * Time.deltaTime);
         }
 
         Separate();

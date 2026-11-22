@@ -3,9 +3,12 @@ using UnityEngine;
 
 public class UnitAttack : MonoBehaviour
 {
+    const float LooseGrace = 0.6f;
+
     Unit self;
     AttackChargeBar chargeBar;
     float progress;
+    float looseTime;
 
     void Awake()
     {
@@ -25,11 +28,21 @@ public class UnitAttack : MonoBehaviour
         List<Unit> targets = FindTargets();
         if (targets.Count == 0)
         {
-            progress = 0f;
-            chargeBar.SetVisible(false);
+            looseTime += Time.deltaTime;
+            if (progress <= 0f || looseTime >= LooseGrace)
+            {
+                progress = 0f;
+                looseTime = 0f;
+                chargeBar.SetVisible(false);
+                return;
+            }
+
+            chargeBar.SetVisible(true);
+            chargeBar.SetProgress(progress);
             return;
         }
 
+        looseTime = 0f;
         chargeBar.SetVisible(true);
         progress += Time.deltaTime / self.AttackInterval;
         if (progress >= 1f)
@@ -38,7 +51,12 @@ public class UnitAttack : MonoBehaviour
             int damage = self.ContactDamage;
             foreach (Unit target in targets)
             {
-                if (target != null && target.IsAlive)
+                if (target == null || !target.IsAlive)
+                    continue;
+
+                if (self.AttackDelivery == AttackDelivery.Ranged)
+                    Projectile.Launch(self, target, damage);
+                else
                     target.Damage(damage);
             }
         }

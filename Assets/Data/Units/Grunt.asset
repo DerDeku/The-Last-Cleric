@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
   displayName: Grunt
   maxHealth: 12
-  moveSpeed: 1.7
+  moveSpeed: 2
   contactDamage: 10
   attackRange: 1
   attackHeight: 0
@@ -28,3 +28,6 @@ MonoBehaviour:
   shape: 1
   bodyColor: {r: 0.9, g: 0.18, b: 0.18, a: 1}
   healthBarColor: {r: 0.95, g: 0.3, b: 0.25, a: 1}
+  targetLine: 0
+  holdPosition: 0
+  attackMoveMultiplier: 0

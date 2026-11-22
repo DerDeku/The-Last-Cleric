@@ -20,6 +20,9 @@ public class Unit : MonoBehaviour
     AreaForm areaForm = AreaForm.Circle;
     AttackDelivery attackDelivery = AttackDelivery.Melee;
     bool previewAttack;
+    BattleLine targetLine = BattleLine.Frontline;
+    bool holdPosition;
+    float attackMoveMultiplier;
 
     public UnitDefinition Definition => definition;
     public UnitTeam Team => team;
@@ -27,15 +30,31 @@ public class Unit : MonoBehaviour
     public AreaForm AreaForm => areaForm;
     public AttackDelivery AttackDelivery => attackDelivery;
     public bool PreviewAttack => previewAttack;
+    public BattleLine TargetLine => targetLine;
+    public bool HoldPosition => holdPosition;
+    public float AttackMoveMultiplier => Mathf.Clamp01(attackMoveMultiplier);
     public int MaxHealth => Mathf.Max(1, baseMaxHealth + bonusMaxHealth);
     public float MoveSpeed => Mathf.Max(0f, baseMoveSpeed + bonusMoveSpeed);
     public int ContactDamage => Mathf.Max(0, baseContactDamage + bonusContactDamage);
     public float AttackRange => Mathf.Max(0f, baseAttackRange + bonusAttackRange);
     public float AttackHeight => baseAttackHeight > 0f ? baseAttackHeight : AttackRange;
     public float AttackInterval => Mathf.Max(0.05f, baseAttackInterval + bonusAttackInterval);
+    const float ShieldHold = 5f;
+    const float ShieldFade = 2.5f;
+
+    float shieldIdle;
+    float shieldDrain;
+    int shieldFadeFrom;
+    bool shieldFading;
+
     public int Health { get; private set; }
     public int Shield { get; private set; }
     public bool IsAlive => Health > 0;
+
+    void LateUpdate()
+    {
+        TickShield();
+    }
 
     protected virtual void Awake()
     {
@@ -60,6 +79,9 @@ public class Unit : MonoBehaviour
         areaForm = source.areaForm;
         attackDelivery = source.attackDelivery;
         previewAttack = source.previewAttack;
+        targetLine = source.targetLine;
+        holdPosition = source.holdPosition;
+        attackMoveMultiplier = Mathf.Clamp01(source.attackMoveMultiplier);
         bonusMaxHealth = 0;
         bonusMoveSpeed = 0f;
         bonusContactDamage = 0;
@@ -141,7 +163,40 @@ public class Unit : MonoBehaviour
             return;
 
         Shield += amount;
+        shieldIdle = 0f;
+        shieldDrain = 0f;
+        shieldFading = false;
         HealFeedback.PlayShield(this);
+    }
+
+    void TickShield()
+    {
+        if (!IsAlive || Shield <= 0)
+        {
+            shieldIdle = 0f;
+            shieldDrain = 0f;
+            shieldFading = false;
+            return;
+        }
+
+        shieldIdle += Time.deltaTime;
+        if (shieldIdle < ShieldHold)
+            return;
+
+        if (!shieldFading)
+        {
+            shieldFading = true;
+            shieldFadeFrom = Mathf.Max(1, Shield);
+            shieldDrain = 0f;
+        }
+
+        shieldDrain += shieldFadeFrom * Time.deltaTime / ShieldFade;
+        int loss = Mathf.FloorToInt(shieldDrain);
+        if (loss <= 0)
+            return;
+
+        shieldDrain -= loss;
+        Shield = Mathf.Max(0, Shield - loss);
     }
 
     public void Damage(int amount)
@@ -149,17 +204,19 @@ public class Unit : MonoBehaviour
         if (!IsAlive || amount <= 0)
             return;
 
+        bool shieldOnly = false;
         if (Shield > 0)
         {
             int absorbed = Mathf.Min(Shield, amount);
             Shield -= absorbed;
             amount -= absorbed;
+            shieldOnly = amount <= 0;
         }
 
-        if (amount <= 0)
-            return;
+        if (amount > 0)
+            Health = Mathf.Max(0, Health - amount);
 
-        Health = Mathf.Max(0, Health - amount);
+        HitFeedback.Play(this, shieldOnly);
         if (Health == 0)
             OnDeath();
     }

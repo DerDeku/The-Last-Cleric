@@ -12,6 +12,7 @@ public class WaveManager : MonoBehaviour
     readonly List<Enemy> alive = new List<Enemy>();
 
     public int Wave { get; private set; }
+    public float SpawnX => spawnX;
     public WaveTable WaveTable => waveTable;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -97,11 +98,6 @@ public class WaveManager : MonoBehaviour
 
         Enemy enemy = body.AddComponent<Enemy>();
         enemy.ApplyDefinition(definition);
-
-        Hero hero = NearestLivingHero(body.transform.position);
-        if (hero != null)
-            enemy.SetTarget(hero);
-
         alive.Add(enemy);
     }
 
@@ -115,27 +111,6 @@ public class WaveManager : MonoBehaviour
         }
 
         return false;
-    }
-
-    static Hero NearestLivingHero(Vector3 from)
-    {
-        Hero best = null;
-        float bestDistance = float.MaxValue;
-        Hero[] heroes = FindObjectsByType<Hero>();
-        foreach (Hero hero in heroes)
-        {
-            if (!hero.IsAlive)
-                continue;
-
-            float distance = ((Vector2)hero.transform.position - (Vector2)from).sqrMagnitude;
-            if (distance >= bestDistance)
-                continue;
-
-            best = hero;
-            bestDistance = distance;
-        }
-
-        return best;
     }
 
     int AliveCount()

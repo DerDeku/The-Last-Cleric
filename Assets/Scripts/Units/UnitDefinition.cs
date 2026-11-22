@@ -30,6 +30,13 @@ public enum AttackDelivery
     Ranged
 }
 
+public enum BattleLine
+{
+    Frontline,
+    Backline,
+    Closest
+}
+
 [CreateAssetMenu(fileName = "Unit", menuName = "Units/Unit Definition")]
 public class UnitDefinition : ScriptableObject
 {
@@ -49,4 +56,7 @@ public class UnitDefinition : ScriptableObject
     public UnitShape shape = UnitShape.Square;
     public Color bodyColor = Color.white;
     public Color healthBarColor = new Color(0.35f, 0.95f, 0.4f, 1f);
+    public BattleLine targetLine = BattleLine.Frontline;
+    public bool holdPosition = false;
+    [Range(0f, 1f)] public float attackMoveMultiplier = 0f;
 }

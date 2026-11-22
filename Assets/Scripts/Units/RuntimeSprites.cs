@@ -5,6 +5,7 @@ public static class RuntimeSprites
     static Sprite square;
     static Sprite squareLeft;
     static Sprite circle;
+    static Sprite arrow;
 
     public static Sprite Square()
     {
@@ -50,6 +51,42 @@ public static class RuntimeSprites
         circle = Sprite.Create(texture, new Rect(0f, 0f, size, size), new Vector2(0.5f, 0.5f), size, 0, SpriteMeshType.FullRect);
         circle.hideFlags = HideFlags.HideAndDontSave;
         return circle;
+    }
+
+    public static Sprite Arrow()
+    {
+        if (arrow != null)
+            return arrow;
+
+        const int width = 20;
+        const int height = 8;
+        var texture = new Texture2D(width, height, TextureFormat.RGBA32, false)
+        {
+            filterMode = FilterMode.Point,
+            wrapMode = TextureWrapMode.Clamp,
+            hideFlags = HideFlags.HideAndDontSave
+        };
+
+        var pixels = new Color32[width * height];
+        for (int y = 0; y < height; y++)
+        {
+            for (int x = 0; x < width; x++)
+            {
+                float fromCenter = Mathf.Abs(y - 3.5f);
+                bool shaft = x <= 12 && fromCenter < 1.1f;
+                bool head = x >= 11 && fromCenter <= (width - 1 - x) * 0.55f;
+                if (!shaft && !head)
+                    continue;
+
+                pixels[y * width + x] = new Color32(255, 255, 255, 255);
+            }
+        }
+
+        texture.SetPixels32(pixels);
+        texture.Apply(false, false);
+        arrow = Sprite.Create(texture, new Rect(0f, 0f, width, height), new Vector2(0.35f, 0.5f), width, 0, SpriteMeshType.FullRect);
+        arrow.hideFlags = HideFlags.HideAndDontSave;
+        return arrow;
     }
 
     static Sprite MakeSquare(Vector2 pivot)
