@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SpellData
   spellName: Heal
   kind: 0
-  radius: 2.2
+  radius: 1
   power: 6
   cooldown: 0
   tickRate: 0.8
-  fillColor: {r: 0.2, g: 1, b: 0.45, a: 0.28}
-  borderColor: {r: 1, g: 1, b: 1, a: 1}
+  fillColor: {r: 0, g: 1, b: 0.25, a: 0.05490196}
+  borderColor: {r: 0.6698113, g: 0.6698113, b: 0.6698113, a: 0.14117648}

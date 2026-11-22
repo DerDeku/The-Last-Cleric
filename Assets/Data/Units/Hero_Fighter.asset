@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c3a1e5b74d2f4a6e8c9d0b1a2f3e4d50, type: 3}
-  m_Name: Hero
+  m_Name: Hero_Fighter
   m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
   displayName: Hero
   maxHealth: 100
@@ -22,7 +22,7 @@ MonoBehaviour:
   attackShape: 1
   areaForm: 0
   attackDelivery: 0
-  previewAttack: 1
+  previewAttack: 0
   team: 0
   bodySize: 1.05
   shape: 0

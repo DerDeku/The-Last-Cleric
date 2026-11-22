@@ -15,9 +15,9 @@ public class HealthBar : MonoBehaviour
 
         var bar = root.AddComponent<HealthBar>();
         bar.unit = target;
-        CreatePiece(root.transform, "Background", RuntimeSprites.Square(), new Vector3(0f, 0f, 0f), new Vector3(1.2f, 0.32f, 1f), new Color(0.05f, 0.05f, 0.05f, 0.9f), 20);
-        bar.healthFill = CreatePiece(root.transform, "Health", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, -0.06f, 0f), new Vector3(1f, 0.1f, 1f), fillColor, 21);
-        bar.shieldFill = CreatePiece(root.transform, "Shield", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0.08f, 0f), new Vector3(0f, 0.08f, 1f), new Color(0.35f, 0.7f, 1f, 0.5f), 22);
+        CreatePiece(root.transform, "Background", RuntimeSprites.Square(), new Vector3(0f, 0f, 0f), new Vector3(1.2f, 0.24f, 1f), new Color(0.05f, 0.05f, 0.05f, 0.9f), 20);
+        bar.healthFill = CreatePiece(root.transform, "Health", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(1f, 0.14f, 1f), fillColor, 21);
+        bar.shieldFill = CreatePiece(root.transform, "Shield", RuntimeSprites.SquareLeftPivot(), new Vector3(-0.5f, 0f, 0f), new Vector3(0f, 0.14f, 1f), new Color(0.35f, 0.7f, 1f, 0.55f), 22);
         bar.shieldRenderer = bar.shieldFill.GetComponent<SpriteRenderer>();
     }
 
@@ -27,10 +27,10 @@ public class HealthBar : MonoBehaviour
             return;
 
         float health = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)unit.Health / unit.MaxHealth);
-        healthFill.localScale = new Vector3(health, 0.1f, 1f);
+        healthFill.localScale = new Vector3(health, 0.14f, 1f);
 
         float shield = unit.MaxHealth <= 0 ? 0f : Mathf.Clamp01((float)unit.Shield / unit.MaxHealth);
-        shieldFill.localScale = new Vector3(shield, 0.08f, 1f);
+        shieldFill.localScale = new Vector3(shield, 0.14f, 1f);
         if (shieldRenderer != null)
             shieldRenderer.enabled = shield > 0.001f;
     }
