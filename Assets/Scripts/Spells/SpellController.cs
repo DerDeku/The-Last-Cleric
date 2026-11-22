@@ -13,6 +13,8 @@ public class SpellController : MonoBehaviour
 
     float tickTimer;
     int selectedSlot = 1;
+    bool castShieldWhenReady;
+    AudioSource audio;
 
     public int SelectedSlot => selectedSlot;
     public Vector2 WorldCursor { get; private set; }
@@ -46,6 +48,11 @@ public class SpellController : MonoBehaviour
 
         Instance = this;
         LoadMissingAssets();
+        audio = gameObject.AddComponent<AudioSource>();
+        audio.playOnAwake = false;
+        audio.spatialBlend = 0f;
+        audio.volume = 0.32f;
+        SpellSounds.Bind(audio);
     }
 
     void Update()
@@ -53,6 +60,7 @@ public class SpellController : MonoBehaviour
         UpdateWorldCursor();
         TickCooldowns();
         ReadHotkey();
+        CastQueuedShield();
         TickPeriodicHeal();
     }
 
@@ -104,10 +112,21 @@ public class SpellController : MonoBehaviour
             return;
 
         selectedSlot = hotkey;
+        castShieldWhenReady = hotkey == 3 && CooldownRemaining(3) > 0f;
+
         if (hotkey == 1)
             return;
 
         TryCast(hotkey);
+    }
+
+    void CastQueuedShield()
+    {
+        if (!castShieldWhenReady || selectedSlot != 3 || CooldownRemaining(3) > 0f)
+            return;
+
+        castShieldWhenReady = false;
+        TryCast(3);
     }
 
     void TryCast(int slot)
@@ -150,6 +169,8 @@ public class SpellController : MonoBehaviour
             HealEffect.ShieldFriends(WorldCursor, spell.radius, spell.power);
         else
             HealEffect.HealFriends(WorldCursor, spell.radius, spell.power);
+
+        SpellSounds.Play(spell.kind);
     }
 
     void UpdateWorldCursor()
