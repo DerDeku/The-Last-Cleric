@@ -37,7 +37,7 @@ public class CursorIndicator : MonoBehaviour
         Color border = spell == null ? emptyBorder : spell.borderColor;
         float charge = spells != null ? spells.IndicatorFill() : 0f;
         float cast = spells != null ? spells.CastFill : 0f;
-        if (spells != null && spells.ShieldArmed && cast <= 0f)
+        if (spells != null && spells.IsWaiting(spells.SelectedSlot) && cast <= 0f)
             border = ArmedBorder;
 
         RebuildCircle(pixelRadius, fill, border);

@@ -13,14 +13,14 @@ public class SpellController : MonoBehaviour
 
     float tickTimer;
     int selectedSlot = 1;
-    bool castShieldWhenReady;
+    int queuedSlot;
     SpellData casting;
     int castingSlot;
     float castTimer;
     AudioSource audio;
 
     public int SelectedSlot => selectedSlot;
-    public bool ShieldArmed => castShieldWhenReady;
+    public bool IsWaiting(int slot) => queuedSlot == slot;
     public Vector2 WorldCursor { get; private set; }
 
     public float CastFill
@@ -74,7 +74,7 @@ public class SpellController : MonoBehaviour
         UpdateWorldCursor();
         TickCooldowns();
         ReadHotkey();
-        CastQueuedShield();
+        CastQueued();
         TickCast();
         TickPeriodicHeal();
     }
@@ -127,24 +127,33 @@ public class SpellController : MonoBehaviour
             return;
 
         selectedSlot = hotkey;
-        castShieldWhenReady = hotkey == 3 && CooldownRemaining(3) > 0f;
-
-        if (hotkey == 1 || hotkey == 4 || CooldownRemaining(hotkey) > 0f)
+        SpellData spell = GetSlot(hotkey);
+        if (spell == null || spell.kind == SpellKind.PeriodicHeal)
         {
+            queuedSlot = 0;
             CancelCast();
             return;
         }
 
+        if (CooldownRemaining(hotkey) > 0f)
+        {
+            queuedSlot = hotkey;
+            CancelCast();
+            return;
+        }
+
+        queuedSlot = 0;
         BeginCast(hotkey);
     }
 
-    void CastQueuedShield()
+    void CastQueued()
     {
-        if (!castShieldWhenReady || selectedSlot != 3 || CooldownRemaining(3) > 0f)
+        if (queuedSlot < 1 || selectedSlot != queuedSlot || CooldownRemaining(queuedSlot) > 0f)
             return;
 
-        castShieldWhenReady = false;
-        BeginCast(3);
+        int slot = queuedSlot;
+        queuedSlot = 0;
+        BeginCast(slot);
     }
 
     void BeginCast(int slot)
