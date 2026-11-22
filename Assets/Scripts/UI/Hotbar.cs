@@ -19,35 +19,39 @@ public class Hotbar : MonoBehaviour
         EnsureStyle();
         const float slotWidth = 120f;
         const float gap = 8f;
-        float total = 4f * slotWidth + 3f * gap;
+        int shown = 0;
+        for (int slot = 1; slot <= 4; slot++)
+        {
+            if (Profile.IsSpellSlotEnabled(slot))
+                shown++;
+        }
+
+        if (shown == 0)
+            return;
+
+        float total = shown * slotWidth + (shown - 1) * gap;
         float x = (Screen.width - total) * 0.5f;
         float y = Screen.height - 78f;
-
-        for (int i = 0; i < 4; i++)
+        int drawn = 0;
+        for (int slot = 1; slot <= 4; slot++)
         {
-            int slot = i + 1;
-            var rect = new Rect(x + i * (slotWidth + gap), y, slotWidth, 62f);
-            bool locked = !Profile.IsSpellSlotEnabled(slot);
-            bool selected = spells.SelectedSlot == slot && !locked;
-            if (locked)
-                GUI.color = new Color(0.08f, 0.08f, 0.08f, 0.55f);
-            else if (selected)
-                GUI.color = new Color(0.95f, 0.82f, 0.25f, 0.95f);
-            else
-                GUI.color = new Color(0.12f, 0.12f, 0.12f, 0.82f);
+            if (!Profile.IsSpellSlotEnabled(slot))
+                continue;
+
+            var rect = new Rect(x + drawn * (slotWidth + gap), y, slotWidth, 62f);
+            drawn++;
+            bool selected = spells.SelectedSlot == slot;
+            GUI.color = selected
+                ? new Color(0.95f, 0.82f, 0.25f, 0.95f)
+                : new Color(0.12f, 0.12f, 0.12f, 0.82f);
             GUI.DrawTexture(rect, Texture2D.whiteTexture);
 
             SpellData spell = spells.GetSlot(slot);
-            string name = Loc.Text("hotbar.empty");
-            if (locked)
-                name = Loc.Text("hotbar.locked");
-            else if (spell != null)
-                name = Loc.Text("spell." + spell.kind);
-
-            float cooldown = spells.CooldownRemaining(slot);
+            string name = spell != null ? Loc.Text("spell." + spell.kind) : Loc.Text("hotbar.empty");
             string timer = "";
-            if (!locked && spell != null)
+            if (spell != null)
             {
+                float cooldown = spells.CooldownRemaining(slot);
                 timer = cooldown > 0.05f ? cooldown.ToString("0.0") : Loc.Text("hotbar.ready");
                 if (spells.IsWaiting(slot))
                     timer = Loc.Text("hotbar.waiting");
@@ -55,7 +59,7 @@ public class Hotbar : MonoBehaviour
                     timer = Loc.Text("hotbar.queue");
             }
 
-            GUI.color = locked ? new Color(0.65f, 0.65f, 0.65f, 1f) : Color.white;
+            GUI.color = Color.white;
             GUI.Label(rect, slot + "\n" + name + "\n" + timer, labelStyle);
         }
 

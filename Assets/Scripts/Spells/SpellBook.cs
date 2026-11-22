@@ -5,14 +5,13 @@ public static class SpellBook
 {
     public static SpellData Equipped(int slot)
     {
-        if (!SaveGame.HasLoadout)
-            return Default(slot);
+        SpellData spell = Default(slot);
+        if (SaveGame.HasLoadout)
+        {
+            string id = SaveGame.LoadoutId(slot);
+            spell = string.IsNullOrEmpty(id) ? null : Find(id);
+        }
 
-        string id = SaveGame.LoadoutId(slot);
-        if (string.IsNullOrEmpty(id))
-            return null;
-
-        SpellData spell = Find(id);
         if (spell == null || !IsKnown(spell))
             return null;
         return spell;
@@ -39,7 +38,7 @@ public static class SpellBook
         {
             foreach (SpellData starter in roster.spells)
             {
-                if (starter == spell || Same(starter, spell))
+                if ((starter == spell || Same(starter, spell)) && !IsLocked(spell))
                     return true;
             }
         }
@@ -68,7 +67,10 @@ public static class SpellBook
         if (roster.spells != null)
         {
             foreach (SpellData spell in roster.spells)
-                Add(list, spell);
+            {
+                if (!IsLocked(spell))
+                    Add(list, spell);
+            }
         }
 
         SkillTree tree = roster.cleric != null ? roster.cleric.tree : null;
@@ -89,19 +91,80 @@ public static class SpellBook
         if (spell == null || !IsKnown(spell) || !Profile.IsSpellSlotEnabled(slot))
             return;
 
-        if (!SaveGame.HasLoadout)
+        EnsureLoadout();
+        SaveGame.SetLoadout(slot, spell.Id);
+    }
+
+    public static void Clear(int slot)
+    {
+        if (!Profile.IsSpellSlotEnabled(slot))
+            return;
+
+        EnsureLoadout();
+        SaveGame.SetLoadout(slot, "");
+    }
+
+    public static int FirstEmpty()
+    {
+        for (int slot = 1; slot <= 4; slot++)
         {
-            for (int i = 1; i <= 4; i++)
-                SaveGame.SetLoadout(i, Default(i) != null ? Default(i).Id : "");
+            if (Profile.IsSpellSlotEnabled(slot) && Equipped(slot) == null)
+                return slot;
         }
 
-        SaveGame.SetLoadout(slot, spell.Id);
+        return 0;
+    }
+
+    public static int SlotOf(string spellId)
+    {
+        if (string.IsNullOrEmpty(spellId))
+            return 0;
+
+        for (int slot = 1; slot <= 4; slot++)
+        {
+            SpellData there = Equipped(slot);
+            if (there != null && there.Id == spellId)
+                return slot;
+        }
+
+        return 0;
+    }
+
+    public static void Place(int fromSlot, string spellId, int toSlot)
+    {
+        SpellData spell = Find(spellId);
+        if (spell == null || fromSlot == toSlot)
+            return;
+
+        SpellData occupant = Equipped(toSlot);
+        Equip(toSlot, spell);
+        for (int slot = 1; slot <= 4; slot++)
+        {
+            if (slot == toSlot)
+                continue;
+
+            SpellData there = Equipped(slot);
+            if (there != null && there.Id == spell.Id)
+                Clear(slot);
+        }
+
+        if (fromSlot > 0 && occupant != null && occupant.Id != spell.Id && Equipped(fromSlot) == null)
+            Equip(fromSlot, occupant);
     }
 
     public static string Describe(SpellData spell)
     {
         if (spell == null)
             return "";
+
+        if (spell.kind == SpellKind.PeriodicHeal)
+            return Loc.Format("spell.periodic.desc", spell.power, Num(spell.tickRate));
+
+        if (spell.kind == SpellKind.BurstHeal)
+            return Loc.Format("spell.burst.desc", spell.power);
+
+        if (spell.kind == SpellKind.Shield)
+            return Loc.Format("spell.shield.desc", spell.power);
 
         if (spell.kind == SpellKind.ChargedHeal)
             return Loc.Format("spell.charge.desc", Num(spell.maxHold), spell.power);
@@ -114,6 +177,23 @@ public static class SpellBook
         }
 
         return Loc.Text("spell." + spell.kind);
+    }
+
+    public static string Facts(SpellData spell)
+    {
+        if (spell == null)
+            return "";
+
+        string radius = Loc.Format("spell.radius", Num(spell.radius));
+        if (spell.kind == SpellKind.PeriodicHeal)
+            return radius + "    " + Loc.Format("spell.every", Num(spell.tickRate));
+
+        if (spell.kind == SpellKind.ChargedHeal)
+            return radius + "    " + Loc.Format("spell.hold", Num(spell.maxHold)) + "    " + Loc.Format("spell.cooldown", Num(spell.cooldown));
+
+        string cast = spell.castTime > 0.01f ? Loc.Format("spell.cast", Num(spell.castTime)) + "    " : "";
+        string cooldown = spell.cooldown > 0.01f ? Loc.Format("spell.cooldown", Num(spell.cooldown)) : "";
+        return radius + "    " + cast + cooldown;
     }
 
     public static SpellData Find(string id)
@@ -145,6 +225,23 @@ public static class SpellBook
         }
 
         return null;
+    }
+
+    static void EnsureLoadout()
+    {
+        if (SaveGame.HasLoadout)
+            return;
+
+        for (int i = 1; i <= 4; i++)
+        {
+            SpellData spell = Default(i);
+            SaveGame.SetLoadout(i, spell != null ? spell.Id : "");
+        }
+    }
+
+    static bool IsLocked(SpellData spell)
+    {
+        return spell != null && spell.Id == "shield" && SaveGame.Cleared < 1 && !SaveGame.HasEvent("wave.1");
     }
 
     static void Add(List<SpellData> list, SpellData spell)

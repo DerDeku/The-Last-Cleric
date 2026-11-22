@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public static class SkillRules
 {
     public static SkillNode Find(SkillTree tree, string id)
@@ -14,13 +16,50 @@ public static class SkillRules
         return null;
     }
 
+    public static int MaxStacks(SkillNode node)
+    {
+        if (node == null || node.stacks <= 1)
+            return 1;
+        return node.stacks;
+    }
+
+    public static int Rank(SkillTree tree, SkillNode node)
+    {
+        if (node == null)
+            return 0;
+        if (node.root)
+            return 1;
+        if (tree == null)
+            return 0;
+        return SaveGame.NodeRank(tree.id, node.id);
+    }
+
+    public static int NextCost(SkillTree tree, SkillNode node)
+    {
+        if (node == null)
+            return 0;
+        int price = Mathf.Max(0, node.cost);
+        if (MaxStacks(node) <= 1)
+            return price;
+        return price * (Rank(tree, node) + 1);
+    }
+
+    public static bool IsComplete(SkillTree tree, SkillNode node)
+    {
+        if (node == null)
+            return false;
+        if (node.root)
+            return true;
+        return Rank(tree, node) >= MaxStacks(node);
+    }
+
     public static bool IsUnlocked(SkillTree tree, SkillNode node)
     {
         if (tree == null || node == null)
             return false;
         if (node.root)
             return true;
-        return Profile.IsNodeUnlocked(tree.id, node.id);
+        return Rank(tree, node) > 0;
     }
 
     public static bool IsVisible(SkillTree tree, SkillNode node)
@@ -36,9 +75,18 @@ public static class SkillRules
 
     public static bool CanBuy(SkillTree tree, SkillNode node)
     {
-        if (!IsVisible(tree, node) || IsUnlocked(tree, node))
+        if (!IsVisible(tree, node) || IsComplete(tree, node))
             return false;
-        return SaveGame.Gold >= node.cost;
+        return SaveGame.Gold >= NextCost(tree, node);
+    }
+
+    public static bool TryBuy(SkillTree tree, SkillNode node)
+    {
+        if (!CanBuy(tree, node) || !SaveGame.TrySpendGold(NextCost(tree, node)))
+            return false;
+
+        SaveGame.SetNodeRank(tree.id, node.id, Rank(tree, node) + 1);
+        return true;
     }
 
     public static bool HasUnlockedNeighbor(SkillTree tree, SkillNode node)

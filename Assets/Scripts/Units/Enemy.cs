@@ -95,6 +95,9 @@ public class Enemy : Unit
 
     protected override void OnDeath()
     {
+        string kind = Definition != null && !string.IsNullOrEmpty(Definition.displayName) ? Definition.displayName : name;
+        BattleLog.AddKill(kind);
+        BattleLog.AddGold(GoldDrop);
         SaveGame.AddGold(GoldDrop);
         Destroy(gameObject);
     }

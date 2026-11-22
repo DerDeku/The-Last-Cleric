@@ -81,7 +81,7 @@ public static class DebugMenu
         foreach (SkillNode node in entry.tree.nodes)
         {
             if (node != null && !string.IsNullOrEmpty(node.id))
-                SaveGame.AddNode(entry.tree.id, node.id);
+                SaveGame.SetNodeRank(entry.tree.id, node.id, SkillRules.MaxStacks(node));
         }
     }
 }

@@ -65,7 +65,7 @@ public class UnitAttack : MonoBehaviour
                 if (self.AttackDelivery == AttackDelivery.Ranged)
                     Projectile.Launch(self, target, damage);
                 else
-                    target.Damage(damage);
+                    target.Damage(damage, self, "fight.auto");
             }
         }
 

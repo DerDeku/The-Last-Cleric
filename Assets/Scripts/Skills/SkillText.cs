@@ -54,9 +54,10 @@ public static class SkillText
         float sum = 0f;
         foreach (SkillNode node in tree.nodes)
         {
-            if (node == null || node.effect != kind || !SkillRules.IsUnlocked(tree, node))
+            int rank = SkillRules.Rank(tree, node);
+            if (node == null || node.effect != kind || rank <= 0)
                 continue;
-            sum += Applied(node);
+            sum += Applied(node) * rank;
         }
 
         return sum;
@@ -80,11 +81,11 @@ public static class SkillText
 
     static string Range(SkillTree tree, SkillNode node, UnitDefinition definition)
     {
-        float applied = Applied(node);
+        float one = Applied(node);
         float current = Base(definition, node.effect) + UnlockedBonus(tree, node.effect);
-        bool owned = SkillRules.IsUnlocked(tree, node);
-        float before = owned ? current - applied : current;
-        float after = owned ? current : current + applied;
+        int rank = SkillRules.Rank(tree, node);
+        float before = SkillRules.IsComplete(tree, node) ? current - one * rank : current;
+        float after = SkillRules.IsComplete(tree, node) ? current : current + one;
         return Loc.Format(EffectKey(node.effect), Num(before), Num(after));
     }
 

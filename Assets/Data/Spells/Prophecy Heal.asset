@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 55a488c080e2314459607e24e80f0580, type: 3}
-  m_Name: Channel Heal
+  m_Name: Prophecy Heal
   m_EditorClassIdentifier: Assembly-CSharp::SpellData
   id: charge
-  spellName: Channel
+  spellName: Prophecy
   kind: 3
   radius: 1.45
   power: 36

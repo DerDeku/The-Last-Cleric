@@ -60,6 +60,17 @@ public static class MenuText
         return style;
     }
 
+    public static GUIStyle Small()
+    {
+        var style = new GUIStyle(GUI.skin.label)
+        {
+            fontSize = 13,
+            wordWrap = true
+        };
+        style.normal.textColor = new Color(0.8f, 0.84f, 0.86f, 1f);
+        return style;
+    }
+
     public static GUIStyle Mark()
     {
         var style = new GUIStyle(GUI.skin.label)

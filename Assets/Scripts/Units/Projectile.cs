@@ -5,12 +5,14 @@ public class Projectile : MonoBehaviour
     const float Speed = 9f;
     const float Life = 3f;
 
+    Unit from;
     Unit target;
     Vector3 aim;
     int damage;
+    string source;
     float age;
 
-    public static void Launch(Unit from, Unit to, int amount)
+    public static void Launch(Unit from, Unit to, int amount, string source = "fight.auto")
     {
         if (from == null || to == null || amount <= 0)
             return;
@@ -27,9 +29,11 @@ public class Projectile : MonoBehaviour
             : new Color(1f, 0.42f, 0.28f, 1f);
 
         var arrow = body.AddComponent<Projectile>();
+        arrow.from = from;
         arrow.target = to;
         arrow.aim = to.transform.position;
         arrow.damage = amount;
+        arrow.source = source;
         arrow.Face(arrow.aim - body.transform.position);
     }
 
@@ -47,7 +51,7 @@ public class Projectile : MonoBehaviour
             return;
 
         if (target != null && target.IsAlive)
-            target.Damage(damage);
+            target.Damage(damage, from, source);
 
         Destroy(gameObject);
     }

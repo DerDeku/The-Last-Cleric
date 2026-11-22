@@ -127,12 +127,5 @@ public static class Profile
         SaveGame.SetHero(entry.id, active);
     }
 
-    public static bool TrySpend(string treeId, string nodeId, int cost)
-    {
-        if (IsNodeUnlocked(treeId, nodeId) || !SaveGame.TrySpendGold(cost))
-            return false;
 
-        SaveGame.AddNode(treeId, nodeId);
-        return true;
-    }
 }

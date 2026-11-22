@@ -22,6 +22,7 @@ MonoBehaviour:
     - guard
     - step
     - reach
+    - force
     revealEvent: 
     effect: 0
     amount: 0
@@ -71,4 +72,17 @@ MonoBehaviour:
     effect: 0
     amount: 0
     cost: 50
+    stacks: 1
+    root: 0
+  - id: force
+    titleKey: skill.fighter.force
+    bodyKey: skill.fighter.force.body
+    position: {x: 0.18, y: 0.5}
+    links:
+    - core
+    revealEvent: 
+    effect: 1
+    amount: 2
+    cost: 15
+    stacks: 5
     root: 0

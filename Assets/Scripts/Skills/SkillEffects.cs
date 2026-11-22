@@ -24,34 +24,36 @@ public static class SkillEffects
 
             foreach (SkillNode node in entry.tree.nodes)
             {
-                if (node == null || node.effect == SkillEffectKind.None || !SkillRules.IsUnlocked(entry.tree, node))
+                int rank = SkillRules.Rank(entry.tree, node);
+                if (node == null || node.effect == SkillEffectKind.None || rank <= 0)
                     continue;
-                Apply(hero, node);
+                Apply(hero, node, rank);
             }
         }
     }
 
-    public static void Apply(Unit unit, SkillNode node)
+    public static void Apply(Unit unit, SkillNode node, int rank)
     {
-        if (unit == null || node == null)
+        if (unit == null || node == null || rank <= 0)
             return;
 
+        float amount = node.amount * rank;
         switch (node.effect)
         {
             case SkillEffectKind.Damage:
-                unit.AddBonusContactDamage(Mathf.RoundToInt(node.amount));
+                unit.AddBonusContactDamage(Mathf.RoundToInt(amount));
                 break;
             case SkillEffectKind.MoveSpeed:
-                unit.AddBonusMoveSpeed(node.amount);
+                unit.AddBonusMoveSpeed(amount);
                 break;
             case SkillEffectKind.Range:
-                unit.AddBonusAttackRange(node.amount);
+                unit.AddBonusAttackRange(amount);
                 break;
             case SkillEffectKind.Health:
-                unit.AddBonusMaxHealth(Mathf.RoundToInt(node.amount));
+                unit.AddBonusMaxHealth(Mathf.RoundToInt(amount));
                 break;
             case SkillEffectKind.Interval:
-                unit.AddBonusAttackInterval(node.amount);
+                unit.AddBonusAttackInterval(amount);
                 break;
         }
     }

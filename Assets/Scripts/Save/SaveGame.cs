@@ -217,15 +217,49 @@ public static class SaveGame
 
     public static bool HasNode(string treeId, string nodeId)
     {
-        return Contains(Current != null ? Current.nodes : null, NodeId(treeId, nodeId));
+        return NodeRank(treeId, nodeId) > 0;
+    }
+
+    public static int NodeRank(string treeId, string nodeId)
+    {
+        if (Current == null || Current.nodes == null)
+            return 0;
+
+        string id = NodeId(treeId, nodeId);
+        string mark = id + "*";
+        foreach (string item in Current.nodes)
+        {
+            if (item == id)
+                return 1;
+            if (item == null || !item.StartsWith(mark))
+                continue;
+            int rank;
+            if (int.TryParse(item.Substring(mark.Length), out rank))
+                return Mathf.Max(0, rank);
+        }
+
+        return 0;
+    }
+
+    public static void SetNodeRank(string treeId, string nodeId, int rank)
+    {
+        if (Current == null || string.IsNullOrEmpty(treeId) || string.IsNullOrEmpty(nodeId))
+            return;
+
+        string id = NodeId(treeId, nodeId);
+        Current.nodes = Without(Current.nodes, id, true);
+        if (rank == 1)
+            Current.nodes = Append(Current.nodes, id);
+        else if (rank > 1)
+            Current.nodes = Append(Current.nodes, id + "*" + rank);
+        Save();
     }
 
     public static void AddNode(string treeId, string nodeId)
     {
         if (Current == null || HasNode(treeId, nodeId))
             return;
-        Current.nodes = Append(Current.nodes, NodeId(treeId, nodeId));
-        Save();
+        SetNodeRank(treeId, nodeId, 1);
     }
 
     public static bool TryPoints(string treeId, out int points)

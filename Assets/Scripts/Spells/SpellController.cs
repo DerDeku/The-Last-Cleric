@@ -47,10 +47,13 @@ public class SpellController : MonoBehaviour
         if (!holding || holdSpell == null || unit == null || holdSpell.maxHold <= 0f)
             return 0;
 
+        if (unit.Team != UnitTeam.Friendly || !unit.IsAlive || !unit.IsDeployed)
+            return 0;
+
         int amount = Mathf.RoundToInt(holdSpell.power * Mathf.Clamp01(holdTimer / holdSpell.maxHold));
         if (amount <= 0 || !HealEffect.Hits(WorldCursor, holdSpell.radius, unit))
             return 0;
-        return Mathf.Min(amount, Mathf.Max(0, unit.MaxHealth - unit.Health));
+        return amount;
     }
 
     public SpellData Selected => GetSlot(selectedSlot);
@@ -341,7 +344,7 @@ public class SpellController : MonoBehaviour
         if (amount <= 0)
             return;
 
-        HealEffect.HealFriends(WorldCursor, spell.radius, amount);
+        HealEffect.Prophecy(WorldCursor, spell.radius, amount, "spell." + spell.kind);
         SpellSounds.Play(spell.kind);
         cooldownRemaining[slot - 1] = Mathf.Max(0f, spell.cooldown);
     }
@@ -378,12 +381,13 @@ public class SpellController : MonoBehaviour
 
     void Apply(SpellData spell)
     {
+        string source = "spell." + spell.kind;
         if (spell.kind == SpellKind.Shield)
-            HealEffect.ShieldFriends(WorldCursor, spell.radius, spell.power);
+            HealEffect.ShieldFriends(WorldCursor, spell.radius, spell.power, source);
         else if (spell.kind == SpellKind.TriageHeal)
-            HealEffect.HealFriends(WorldCursor, spell.radius, unit => TriageAmount(spell, unit));
+            HealEffect.HealFriends(WorldCursor, spell.radius, unit => TriageAmount(spell, unit), source);
         else
-            HealEffect.HealFriends(WorldCursor, spell.radius, spell.power);
+            HealEffect.HealFriends(WorldCursor, spell.radius, spell.power, source);
 
         SpellSounds.Play(spell.kind);
     }

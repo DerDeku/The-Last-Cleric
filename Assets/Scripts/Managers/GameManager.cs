@@ -36,8 +36,9 @@ public class GameManager : MonoBehaviour
     public void SetState(GameState state)
     {
         State = state;
-        Time.timeScale = state == GameState.Menu ? 0f : 1f;
-        if (state == GameState.Menu)
+        bool paused = state == GameState.Menu || state == GameState.GameOver;
+        Time.timeScale = paused ? 0f : 1f;
+        if (paused)
             SpellSounds.Stop();
     }
 }

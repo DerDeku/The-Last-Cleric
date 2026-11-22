@@ -2,18 +2,18 @@ using UnityEngine;
 
 public static class HealEffect
 {
-    public static void HealFriends(Vector2 center, float radius, int power)
+    public static void HealFriends(Vector2 center, float radius, int power, string source = null)
     {
-        AffectFriends(center, radius, unit => unit.Heal(power));
+        AffectFriends(center, radius, unit => unit.Heal(power, source));
     }
 
-    public static void HealFriends(Vector2 center, float radius, System.Func<Unit, int> amount)
+    public static void HealFriends(Vector2 center, float radius, System.Func<Unit, int> amount, string source = null)
     {
         AffectFriends(center, radius, unit =>
         {
             int heal = amount != null ? amount(unit) : 0;
             if (heal > 0)
-                unit.Heal(heal);
+                unit.Heal(heal, source);
         });
     }
 
@@ -24,9 +24,21 @@ public static class HealEffect
         return Covers(center, radius * radius, unit);
     }
 
-    public static void ShieldFriends(Vector2 center, float radius, int power)
+    public static void Prophecy(Vector2 center, float radius, int amount, string source)
     {
-        AffectFriends(center, radius, unit => unit.AddShield(power));
+        AffectFriends(center, radius, unit =>
+        {
+            int missing = Mathf.Max(0, unit.MaxHealth - unit.Health);
+            unit.Heal(amount, source);
+            int extra = amount - missing;
+            if (extra > 0)
+                unit.AddShield(extra, source);
+        });
+    }
+
+    public static void ShieldFriends(Vector2 center, float radius, int power, string source)
+    {
+        AffectFriends(center, radius, unit => unit.AddShield(power, source));
     }
 
     static void AffectFriends(Vector2 center, float radius, System.Action<Unit> effect)

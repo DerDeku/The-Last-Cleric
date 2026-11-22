@@ -1,11 +1,25 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PrepareScreen : IMenuScreen
 {
+    struct SpellPick
+    {
+        public SpellData spell;
+        public Rect rect;
+        public int slot;
+    }
+
     int section;
     int heroIndex;
     string selectedNode;
-    int equipSlot = 1;
+    int clericPage;
+    string dragSpellId;
+    int dragFromSlot;
+    Vector2 dragOrigin;
+    bool dragMoved;
+    bool spellBarFull;
+    readonly List<SpellPick> picks = new List<SpellPick>();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     bool debugOpen;
 #endif
@@ -43,6 +57,7 @@ public class PrepareScreen : IMenuScreen
         if (debugOpen)
             DebugMenu.Draw(roster);
 #endif
+        DrawDragGhost();
     }
 
     static void DrawWaves()
@@ -119,32 +134,250 @@ public class PrepareScreen : IMenuScreen
 
     void DrawCleric(PrepareRoster roster)
     {
-        RosterEntry cleric = roster != null ? roster.cleric : null;
-        SkillTree tree = cleric != null ? cleric.tree : null;
-        DrawTree(new Rect(280f, 28f, Screen.width - 540f, Screen.height - 56f), tree, cleric != null ? cleric.unit : null, Loc.Text("prepare.cleric"));
-
-        GUILayout.BeginArea(new Rect(Screen.width - 250f, 28f, 220f, Screen.height - 56f));
-        GUILayout.Label(Loc.Text("prepare.spells"), MenuText.Body());
+        var panel = new Rect(280f, 28f, Screen.width - 304f, Screen.height - 56f);
         Color previous = GUI.backgroundColor;
+        GUI.backgroundColor = clericPage == 0 ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
+        if (GUI.Button(new Rect(panel.x, panel.y, 150f, 34f), Loc.Text("prepare.tree")))
+            clericPage = 0;
+        GUI.backgroundColor = clericPage == 1 ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
+        if (GUI.Button(new Rect(panel.x + 158f, panel.y, 150f, 34f), Loc.Text("prepare.spells")))
+            clericPage = 1;
+        GUI.backgroundColor = previous;
+
+        var body = new Rect(panel.x, panel.y + 44f, panel.width, panel.height - 44f);
+        if (clericPage == 0)
+        {
+            RosterEntry cleric = roster != null ? roster.cleric : null;
+            SkillTree tree = cleric != null ? cleric.tree : null;
+            DrawTree(body, tree, cleric != null ? cleric.unit : null, Loc.Text("prepare.cleric"));
+            return;
+        }
+
+        DrawSpellPage(body, roster);
+    }
+
+    void DrawSpellPage(Rect body, PrepareRoster roster)
+    {
+        LayoutSpells(body, roster);
+        HandleSpellPointer();
+        GUI.Box(body, GUIContent.none);
+
+        GUI.Label(new Rect(body.x + 16f, body.y + 10f, body.width - 32f, 24f), Loc.Text("spell.bar"), MenuText.Body());
+        foreach (SpellPick pick in picks)
+        {
+            if (pick.slot <= 0)
+                continue;
+            DrawSpellCard(pick.rect, pick.spell, pick.slot.ToString(), true);
+        }
+
+        float hintY = body.y + 132f;
+        string hint = spellBarFull ? Loc.Text("spell.full") : Loc.Text("spell.hint");
+        GUI.Label(new Rect(body.x + 16f, hintY, body.width - 32f, 40f), hint, MenuText.Small());
+        GUI.Label(new Rect(body.x + 16f, hintY + 42f, body.width - 32f, 24f), Loc.Text("spell.known"), MenuText.Body());
+        foreach (SpellPick pick in picks)
+        {
+            if (pick.slot > 0)
+                continue;
+            DrawSpellCard(pick.rect, pick.spell, null, false);
+        }
+    }
+
+    void LayoutSpells(Rect body, PrepareRoster roster)
+    {
+        picks.Clear();
+        int open = 0;
         for (int slot = 1; slot <= 4; slot++)
         {
-            bool open = Profile.IsSpellSlotEnabled(slot);
-            SpellData equipped = open ? SpellBook.Equipped(slot) : null;
-            string name = !open ? Loc.Text("hotbar.locked") : equipped == null ? Loc.Text("hotbar.empty") : Loc.Text("spell." + equipped.kind);
-            GUI.backgroundColor = slot == equipSlot ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
-            if (GUILayout.Button(slot + "  " + name, GUILayout.Height(32f)) && open)
-                equipSlot = slot;
+            if (Profile.IsSpellSlotEnabled(slot))
+                open++;
         }
 
-        GUI.backgroundColor = previous;
-        GUILayout.Space(12f);
-        foreach (SpellData spell in SpellBook.Known(roster))
+        float slotWidth = open > 0 ? Mathf.Min(220f, (body.width - 32f - (open - 1) * 10f) / open) : 180f;
+        const float slotHeight = 78f;
+        float x = body.x + 16f;
+        float y = body.y + 38f;
+        for (int slot = 1; slot <= 4; slot++)
         {
-            if (GUILayout.Button(Loc.Text("spell." + spell.kind), GUILayout.Height(32f)))
-                SpellBook.Equip(equipSlot, spell);
+            if (!Profile.IsSpellSlotEnabled(slot))
+                continue;
+
+            picks.Add(new SpellPick
+            {
+                spell = SpellBook.Equipped(slot),
+                rect = new Rect(x, y, slotWidth, slotHeight),
+                slot = slot
+            });
+            x += slotWidth + 10f;
         }
 
-        GUILayout.EndArea();
+        List<SpellData> known = SpellBook.Known(roster);
+        int columns = body.width >= 760f ? 2 : 1;
+        float cardWidth = (body.width - 32f - (columns - 1) * 12f) / columns;
+        const float cardHeight = 108f;
+        float cardsY = body.y + 204f;
+        for (int i = 0; i < known.Count; i++)
+        {
+            int column = i % columns;
+            int row = i / columns;
+            var rect = new Rect(body.x + 16f + column * (cardWidth + 12f), cardsY + row * (cardHeight + 10f), cardWidth, cardHeight);
+            picks.Add(new SpellPick { spell = known[i], rect = rect, slot = 0 });
+        }
+    }
+
+    void HandleSpellPointer()
+    {
+        Event pointer = Event.current;
+        if (pointer == null)
+            return;
+
+        if (pointer.type == EventType.MouseDown && pointer.button == 0)
+        {
+            SpellPick hit;
+            if (!PickAt(pointer.mousePosition, out hit) || hit.spell == null && hit.slot <= 0)
+            {
+                dragSpellId = null;
+                return;
+            }
+
+            if (hit.spell == null)
+            {
+                dragSpellId = null;
+                return;
+            }
+
+            dragSpellId = hit.spell.Id;
+            dragFromSlot = hit.slot;
+            dragOrigin = pointer.mousePosition;
+            dragMoved = false;
+            pointer.Use();
+            return;
+        }
+
+        if (pointer.type == EventType.MouseDrag && !string.IsNullOrEmpty(dragSpellId))
+        {
+            if ((pointer.mousePosition - dragOrigin).sqrMagnitude > 36f)
+                dragMoved = true;
+            pointer.Use();
+            return;
+        }
+
+        if (pointer.type != EventType.MouseUp || pointer.button != 0 || string.IsNullOrEmpty(dragSpellId))
+            return;
+
+        if ((pointer.mousePosition - dragOrigin).sqrMagnitude > 36f)
+            dragMoved = true;
+
+        if (dragMoved)
+        {
+            SpellPick hit;
+            if (PickSlot(pointer.mousePosition, out hit))
+            {
+                SpellBook.Place(dragFromSlot, dragSpellId, hit.slot);
+                spellBarFull = false;
+            }
+            else if (dragFromSlot > 0)
+            {
+                SpellBook.Clear(dragFromSlot);
+                spellBarFull = false;
+            }
+        }
+        else if (dragFromSlot <= 0)
+        {
+            if (SpellBook.SlotOf(dragSpellId) > 0)
+                spellBarFull = false;
+            else
+            {
+                int empty = SpellBook.FirstEmpty();
+                if (empty > 0)
+                {
+                    SpellBook.Place(0, dragSpellId, empty);
+                    spellBarFull = false;
+                }
+                else
+                    spellBarFull = true;
+            }
+        }
+
+        dragSpellId = null;
+        dragMoved = false;
+        pointer.Use();
+    }
+
+    bool PickAt(Vector2 point, out SpellPick hit)
+    {
+        for (int i = picks.Count - 1; i >= 0; i--)
+        {
+            if (!picks[i].rect.Contains(point))
+                continue;
+            hit = picks[i];
+            return true;
+        }
+
+        hit = default;
+        return false;
+    }
+
+    bool PickSlot(Vector2 point, out SpellPick hit)
+    {
+        foreach (SpellPick pick in picks)
+        {
+            if (pick.slot <= 0 || !pick.rect.Contains(point))
+                continue;
+            hit = pick;
+            return true;
+        }
+
+        hit = default;
+        return false;
+    }
+
+    void DrawSpellCard(Rect rect, SpellData spell, string key, bool bar)
+    {
+        bool over = rect.Contains(Event.current.mousePosition);
+        bool drop = bar && dragMoved && over;
+        Color fill = spell != null ? spell.fillColor : new Color(0.45f, 0.48f, 0.5f, 1f);
+        fill.a = 1f;
+        GUI.color = drop ? new Color(0.95f, 0.82f, 0.35f, 1f) : over ? new Color(0.2f, 0.22f, 0.2f, 1f) : new Color(0.12f, 0.13f, 0.14f, 1f);
+        GUI.DrawTexture(rect, Texture2D.whiteTexture);
+        GUI.color = fill;
+        GUI.DrawTexture(new Rect(rect.x, rect.y, 6f, rect.height), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+
+        string title = spell == null ? Loc.Text("hotbar.empty") : Loc.Text("spell." + spell.kind);
+        if (!string.IsNullOrEmpty(key))
+            title = key + "   " + title;
+        GUI.Label(new Rect(rect.x + 14f, rect.y + 6f, rect.width - 22f, 22f), title, MenuText.Body());
+        if (spell == null)
+            return;
+
+        if (bar)
+        {
+            GUI.Label(new Rect(rect.x + 14f, rect.y + 32f, rect.width - 22f, 40f), SpellBook.Facts(spell), MenuText.Small());
+            return;
+        }
+
+        GUI.Label(new Rect(rect.x + 14f, rect.y + 30f, rect.width - 22f, 48f), SpellBook.Describe(spell), MenuText.Small());
+        GUI.Label(new Rect(rect.x + 14f, rect.yMax - 24f, rect.width - 22f, 20f), SpellBook.Facts(spell), MenuText.Small());
+    }
+
+    void DrawDragGhost()
+    {
+        if (!dragMoved || string.IsNullOrEmpty(dragSpellId) || Event.current.type != EventType.Repaint)
+            return;
+
+        SpellData spell = SpellBook.Find(dragSpellId);
+        if (spell == null)
+            return;
+
+        var ghost = new Rect(Event.current.mousePosition.x + 14f, Event.current.mousePosition.y + 10f, 210f, 36f);
+        GUI.color = new Color(0.08f, 0.09f, 0.1f, 0.94f);
+        GUI.DrawTexture(ghost, Texture2D.whiteTexture);
+        Color fill = spell.fillColor;
+        fill.a = 1f;
+        GUI.color = fill;
+        GUI.DrawTexture(new Rect(ghost.x, ghost.y, 6f, ghost.height), Texture2D.whiteTexture);
+        GUI.color = Color.white;
+        GUI.Label(new Rect(ghost.x + 12f, ghost.y + 6f, ghost.width - 18f, 24f), Loc.Text("spell." + spell.kind), MenuText.Body());
     }
 
     void DrawTree(Rect panel, SkillTree tree, UnitDefinition definition, string headline)
@@ -167,11 +400,25 @@ public class PrepareScreen : IMenuScreen
                 continue;
 
             Rect rect = NodeRect(panel, node);
-            bool unlocked = SkillRules.IsUnlocked(tree, node);
-            GUI.color = unlocked ? new Color(0.95f, 0.82f, 0.35f, 1f) : Color.white;
+            int rank = SkillRules.Rank(tree, node);
+            int stacks = SkillRules.MaxStacks(node);
+            bool stack = stacks > 1;
+            bool complete = SkillRules.IsComplete(tree, node);
+            if (stack)
+            {
+                GUI.color = new Color(0.45f, 0.72f, 0.95f, 1f);
+                GUI.DrawTexture(new Rect(rect.x - 4f, rect.y - 4f, rect.width + 8f, rect.height + 8f), Texture2D.whiteTexture);
+            }
+
+            GUI.color = complete
+                ? new Color(0.95f, 0.82f, 0.35f, 1f)
+                : stack ? new Color(0.8f, 0.9f, 1f, 1f) : Color.white;
             string title = Loc.Text(node.titleKey);
-            if (!unlocked && node.cost > 0)
-                title += " (" + node.cost + ")";
+            int price = SkillRules.NextCost(tree, node);
+            if (!complete && price > 0)
+                title += " (" + price + ")";
+            if (stack && rank > 0)
+                title += "\n(" + rank + "/" + stacks + ")";
             if (GUI.Button(rect, title))
                 selectedNode = node.id;
             string mark = SkillText.Mark(node);
@@ -188,7 +435,7 @@ public class PrepareScreen : IMenuScreen
             GUI.Label(new Rect(panel.x + 16f, textY + 22f, panel.width - 180f, 126f), SkillText.Describe(tree, selected, definition, headline), MenuText.Wrap());
             var buy = new Rect(panel.xMax - 168f, textY + 28f, 148f, 36f);
             if (SkillRules.CanBuy(tree, selected) && GUI.Button(buy, Loc.Text("prepare.unlock")))
-                Profile.TrySpend(tree.id, selected.id, selected.cost);
+                SkillRules.TryBuy(tree, selected);
         }
 
         if (hovered != null && Event.current.type == EventType.Repaint)
@@ -248,17 +495,18 @@ public class PrepareScreen : IMenuScreen
         }
     }
 
-    static Rect NodeRect(Rect panel, SkillNode node)
-    {
-        Vector2 center = NodeCenter(panel, node);
-        return new Rect(center.x - 46f, center.y - 28f, 92f, 56f);
-    }
-
     static Vector2 NodeCenter(Rect panel, SkillNode node)
     {
         float x = Mathf.Lerp(panel.x + 70f, panel.xMax - 70f, Mathf.Clamp01(node.position.x));
         float y = Mathf.Lerp(panel.y + 50f, panel.yMax - 190f, Mathf.Clamp01(node.position.y));
         return new Vector2(x, y);
+    }
+
+    static Rect NodeRect(Rect panel, SkillNode node)
+    {
+        Vector2 center = NodeCenter(panel, node);
+        float height = SkillRules.MaxStacks(node) > 1 ? 68f : 56f;
+        return new Rect(center.x - 46f, center.y - height * 0.5f, 92f, height);
     }
 
     static void DrawLine(Vector2 from, Vector2 to)

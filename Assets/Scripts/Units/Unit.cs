@@ -166,22 +166,27 @@ public class Unit : MonoBehaviour
         return other.CanHit(this);
     }
 
-    public void Heal(int amount)
+    public void Heal(int amount, string source = null)
     {
         if (!IsAlive || amount <= 0)
             return;
 
         int before = Health;
         Health = Mathf.Min(MaxHealth, Health + amount);
-        if (Health > before)
-            HealFeedback.Play(this);
+        int gained = Health - before;
+        if (gained <= 0)
+            return;
+
+        HealFeedback.Play(this);
+        BattleLog.AddHeal(source, gained);
     }
 
-    public void AddShield(int amount)
+    public void AddShield(int amount, string source = null)
     {
         if (!IsAlive || amount <= 0)
             return;
 
+        BattleLog.AddShield(source, amount);
         Shield += amount;
         shieldIdle = 0f;
         shieldDrain = 0f;
@@ -219,11 +224,12 @@ public class Unit : MonoBehaviour
         Shield = Mathf.Max(0, Shield - loss);
     }
 
-    public void Damage(int amount)
+    public void Damage(int amount, Unit attacker = null, string source = null)
     {
         if (!IsAlive || amount <= 0)
             return;
 
+        int dealt = amount;
         bool shieldOnly = false;
         if (Shield > 0)
         {
@@ -235,6 +241,9 @@ public class Unit : MonoBehaviour
 
         if (amount > 0)
             Health = Mathf.Max(0, Health - amount);
+
+        if (attacker != null && attacker.Team == UnitTeam.Friendly)
+            BattleLog.AddDamage(attacker.gameObject.name, source, dealt);
 
         HitFeedback.Play(this, shieldOnly);
         if (Health == 0)

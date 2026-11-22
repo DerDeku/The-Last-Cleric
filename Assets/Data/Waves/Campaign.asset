@@ -13,12 +13,6 @@ MonoBehaviour:
   m_Name: Campaign
   m_EditorClassIdentifier: Assembly-CSharp::WaveTable
   timeBetweenWaves: 2
-  waves:
-  - {fileID: 11400000, guid: 44dd55ee66ff77889900111122223333, type: 2}
-  - {fileID: 11400000, guid: 55ee66ff778899001111222233334444, type: 2}
-  - {fileID: 11400000, guid: 66ff7788990011112222333344445555, type: 2}
-  - {fileID: 11400000, guid: adff34efaa5c7b34ab0432efc055253e, type: 2}
-  - {fileID: 11400000, guid: 653124cbb04e6a74e81cf22ce59318fa, type: 2}
   chapters:
-  - waveCount: 3
-  - waveCount: 2
+  - {fileID: 11400000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 2}
+  - {fileID: 11400000, guid: b2c3d4e5f60718293a4b5c6d7e8f90a1, type: 2}

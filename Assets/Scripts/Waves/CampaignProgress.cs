@@ -1,11 +1,31 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public static class CampaignProgress
 {
     public static int Count(WaveTable table)
     {
-        return table != null && table.waves != null ? table.waves.Length : 0;
+        int total = 0;
+        int[] counts = Counts(table);
+        for (int i = 0; i < counts.Length; i++)
+            total += counts[i];
+        return total;
+    }
+
+    public static WaveDefinition Wave(WaveTable table, int index)
+    {
+        if (table == null || table.chapters == null || index < 0)
+            return null;
+
+        int cursor = 0;
+        foreach (ChapterTable chapter in table.chapters)
+        {
+            int length = Length(chapter);
+            if (index < cursor + length)
+                return chapter.waves[index - cursor];
+            cursor += length;
+        }
+
+        return null;
     }
 
     public static bool IsOpen(WaveTable table, int index)
@@ -47,13 +67,16 @@ public static class CampaignProgress
 
     public static int ChapterCount(WaveTable table)
     {
-        return Counts(table).Length;
+        return table != null && table.chapters != null ? table.chapters.Length : 0;
     }
 
     public static int ChapterStart(WaveTable table, int chapter)
     {
         int[] counts = Counts(table);
-        chapter = Mathf.Clamp(chapter, 0, Mathf.Max(0, counts.Length - 1));
+        if (counts.Length == 0)
+            return 0;
+
+        chapter = Mathf.Clamp(chapter, 0, counts.Length - 1);
         int start = 0;
         for (int i = 0; i < chapter; i++)
             start += counts[i];
@@ -138,7 +161,10 @@ public static class CampaignProgress
             if (cleared >= passed)
             {
                 if (!SaveGame.HasEvent(id))
+                {
                     Profile.BenchForEvent(id);
+                    BattleLog.AddUnlock(UnlockLabel(id));
+                }
                 SaveGame.AddEvent(id);
             }
             else
@@ -148,25 +174,35 @@ public static class CampaignProgress
 
     static int[] Counts(WaveTable table)
     {
-        int total = Count(table);
-        if (table == null || table.chapters == null || table.chapters.Length == 0)
-            return new[] { total };
+        int count = ChapterCount(table);
+        var counts = new int[count];
+        for (int i = 0; i < count; i++)
+            counts[i] = Length(table.chapters[i]);
+        return counts;
+    }
 
-        var counts = new List<int>();
-        int used = 0;
-        foreach (CampaignChapter chapter in table.chapters)
+    public static void Reveal(WaveTable table)
+    {
+        SyncChapters(table, SaveGame.Cleared);
+    }
+
+    static string UnlockLabel(string eventId)
+    {
+        PrepareRoster roster = Resources.Load<PrepareRoster>("Menu/Roster");
+        if (roster != null && roster.heroes != null)
         {
-            int count = chapter != null ? Mathf.Max(0, chapter.waveCount) : 0;
-            if (count == 0)
-                continue;
-            counts.Add(count);
-            used += count;
+            foreach (RosterEntry entry in roster.heroes)
+            {
+                if (entry != null && entry.unlockEvent == eventId && !string.IsNullOrEmpty(entry.nameKey))
+                    return entry.nameKey;
+            }
         }
 
-        if (used < total)
-            counts.Add(total - used);
-        if (counts.Count == 0)
-            counts.Add(total);
-        return counts.ToArray();
+        return eventId;
+    }
+
+    static int Length(ChapterTable chapter)
+    {
+        return chapter != null && chapter.waves != null ? chapter.waves.Length : 0;
     }
 }
