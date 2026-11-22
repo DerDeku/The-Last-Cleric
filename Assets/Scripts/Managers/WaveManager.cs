@@ -33,6 +33,9 @@ public class WaveManager : MonoBehaviour
 
     IEnumerator RunWaves()
     {
+        while (GameManager.Instance == null || GameManager.Instance.State != GameState.Playing)
+            yield return null;
+
         if (waveTable == null || waveTable.waves == null)
         {
             Debug.LogWarning("WaveManager hat keine WaveTable.");
@@ -106,7 +109,7 @@ public class WaveManager : MonoBehaviour
         Hero[] heroes = FindObjectsByType<Hero>();
         foreach (Hero hero in heroes)
         {
-            if (hero.IsAlive)
+            if (hero.IsAlive && hero.IsDeployed)
                 return true;
         }
 

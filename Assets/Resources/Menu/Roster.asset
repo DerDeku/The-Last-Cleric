@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5e6f708192a3b4c5d6e7f8091a2b3c4, type: 3}
+  m_Name: Roster
+  m_EditorClassIdentifier: Assembly-CSharp::PrepareRoster
+  partySize: 4
+  heroes:
+  - id: fighter
+    nameKey: hero.fighter
+    unlockEvent: 
+    startsActive: 1
+    unit: {fileID: 11400000, guid: 11aa22bb33cc44dd55ee66ff77889900, type: 2}
+    tree: {fileID: 11400000, guid: e6f708192a3b4c5d6e7f8091a2b3c4d5, type: 2}
+  - id: ranger
+    nameKey: hero.ranger
+    unlockEvent: 
+    startsActive: 1
+    unit: {fileID: 11400000, guid: c3d2e4f5061728394a5b6c7d8e9f0133, type: 2}
+    tree: {fileID: 11400000, guid: f708192a3b4c5d6e7f8091a2b3c4d5e6, type: 2}
+  cleric:
+    id: cleric
+    nameKey: prepare.cleric
+    unit: {fileID: 0}
+    tree: {fileID: 11400000, guid: 08192a3b4c5d6e7f8091a2b3c4d5e6f7, type: 2}
+  spells:
+  - {fileID: 11400000, guid: 7a1b0c2d3e4f5061728394a5b6c7d801, type: 2}
+  - {fileID: 11400000, guid: 7a1b0c2d3e4f5061728394a5b6c7d802, type: 2}
+  - {fileID: 11400000, guid: 7a1b0c2d3e4f5061728394a5b6c7d803, type: 2}

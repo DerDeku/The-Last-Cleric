@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public GameState State { get; private set; } = GameState.Playing;
+    public GameState State { get; private set; } = GameState.Menu;
 
     void Awake()
     {
@@ -24,6 +24,7 @@ public class GameManager : MonoBehaviour
         }
 
         Instance = this;
+        State = GameState.Menu;
     }
 
     public void SetState(GameState state)

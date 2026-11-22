@@ -21,7 +21,7 @@ public static class HealEffect
         Unit[] units = Object.FindObjectsByType<Unit>();
         foreach (Unit unit in units)
         {
-            if (!unit.IsAlive || unit.Team != UnitTeam.Friendly)
+            if (!unit.IsAlive || !unit.IsDeployed || unit.Team != UnitTeam.Friendly)
                 continue;
 
             if (Covers(center, radiusSqr, unit))

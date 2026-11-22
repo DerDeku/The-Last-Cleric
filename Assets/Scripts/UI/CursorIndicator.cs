@@ -26,6 +26,9 @@ public class CursorIndicator : MonoBehaviour
         if (Event.current.type != EventType.Repaint)
             return;
 
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            return;
+
         var pointer = UnityEngine.InputSystem.Mouse.current;
         if (pointer == null)
             return;

@@ -13,7 +13,7 @@ public class Hero : Unit
 
     void Update()
     {
-        if (!IsAlive || !HoldPosition || AttackDelivery != AttackDelivery.Melee || MoveSpeed <= 0f)
+        if (!IsAlive || !IsDeployed || !HoldPosition || AttackDelivery != AttackDelivery.Melee || MoveSpeed <= 0f)
         {
             focus = null;
             SetAttackFocus(null);

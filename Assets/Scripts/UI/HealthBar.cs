@@ -5,7 +5,7 @@ public class HealthBar : MonoBehaviour
     const float LifeWidth = 1f;
     const float BarHeight = 0.14f;
     const float Pad = 0.1f;
-    const float MaxShown = 3f;
+    const float MaxShown = 1.5f;
 
     static readonly Color ShieldOnLife = new Color(0.35f, 0.7f, 1f, 0.55f);
     static readonly Color ShieldExtra = new Color(0.45f, 0.82f, 1f, 0.92f);
@@ -48,7 +48,8 @@ public class HealthBar : MonoBehaviour
 
         float ratio = unit.MaxHealth <= 0 ? 0f : Mathf.Max(0f, (float)unit.Shield / unit.MaxHealth);
         float shown = Mathf.Min(ratio, MaxShown);
-        float hot = Mathf.Clamp01((ratio - MaxShown) / 2f);
+        float excess = Mathf.Max(0f, ratio - MaxShown);
+        float hot = excess <= 0f ? 0f : Mathf.Clamp01(Mathf.Log(1f + excess) / Mathf.Log(5f));
         float covered = Mathf.Min(shown, 1f) * LifeWidth;
         float extra = Mathf.Max(0f, shown - 1f) * LifeWidth;
 

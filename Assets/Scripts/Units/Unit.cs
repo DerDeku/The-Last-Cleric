@@ -56,6 +56,15 @@ public class Unit : MonoBehaviour
     public int Health { get; private set; }
     public int Shield { get; private set; }
     public bool IsAlive => Health > 0;
+    public bool IsDeployed { get; private set; } = true;
+
+    public void SetDeployed(bool deployed)
+    {
+        IsDeployed = deployed;
+        SpriteRenderer[] renderers = GetComponentsInChildren<SpriteRenderer>(true);
+        foreach (SpriteRenderer renderer in renderers)
+            renderer.enabled = deployed;
+    }
 
     void LateUpdate()
     {

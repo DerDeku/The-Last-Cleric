@@ -17,6 +17,7 @@ public static class SpellSounds
         if (source == null)
             return;
 
+        source.volume = GameSettings.SfxVolume;
         switch (kind)
         {
             case SpellKind.BurstHeal:

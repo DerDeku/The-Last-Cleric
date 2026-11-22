@@ -60,7 +60,7 @@ public static class BattleLines
         Unit[] units = Object.FindObjectsByType<Unit>();
         foreach (Unit unit in units)
         {
-            if (unit == null || !unit.IsAlive)
+            if (unit == null || !unit.IsAlive || !unit.IsDeployed)
                 continue;
 
             living.Add(unit);

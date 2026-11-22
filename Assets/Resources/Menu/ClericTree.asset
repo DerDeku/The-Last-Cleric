@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4d5e6f708192a3b4c5d6e7f8091a2b3, type: 3}
+  m_Name: ClericTree
+  m_EditorClassIdentifier: Assembly-CSharp::SkillTree
+  id: cleric
+  nodes:
+  - id: core
+    titleKey: skill.cleric.core
+    bodyKey: skill.cleric.core.body
+    position: {x: 0.5, y: 0.3}
+    links:
+    - ward
+    revealEvent: 
+    effectId: 
+    cost: 0
+    root: 1
+  - id: ward
+    titleKey: skill.cleric.ward
+    bodyKey: skill.cleric.ward.body
+    position: {x: 0.5, y: 0.64}
+    links:
+    - core
+    revealEvent: 
+    effectId: 
+    cost: 1
+    root: 0

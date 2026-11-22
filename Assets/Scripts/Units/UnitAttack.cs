@@ -18,7 +18,7 @@ public class UnitAttack : MonoBehaviour
 
     void Update()
     {
-        if (self == null || !self.IsAlive || self.ContactDamage <= 0)
+        if (self == null || !self.IsAlive || !self.IsDeployed || self.ContactDamage <= 0)
         {
             progress = 0f;
             chargeBar.SetVisible(false);
@@ -80,7 +80,7 @@ public class UnitAttack : MonoBehaviour
         Unit[] units = FindObjectsByType<Unit>();
         foreach (Unit candidate in units)
         {
-            if (candidate == self || !candidate.IsAlive || candidate.Team == self.Team)
+            if (candidate == self || !candidate.IsAlive || !candidate.IsDeployed || candidate.Team == self.Team)
                 continue;
 
             if (!self.CanHit(candidate))

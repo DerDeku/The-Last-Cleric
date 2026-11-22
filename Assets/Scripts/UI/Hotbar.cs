@@ -9,6 +9,9 @@ public class Hotbar : MonoBehaviour
         if (Event.current.type != EventType.Repaint)
             return;
 
+        if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
+            return;
+
         SpellController spells = SpellController.Instance;
         if (spells == null)
             return;
@@ -29,12 +32,12 @@ public class Hotbar : MonoBehaviour
             GUI.DrawTexture(rect, Texture2D.whiteTexture);
 
             SpellData spell = spells.GetSlot(slot);
-            string name = spell == null ? "Leer" : spell.spellName;
+            string name = spell == null ? Loc.Text("hotbar.empty") : Loc.Text("spell." + spell.kind);
             float cooldown = spells.CooldownRemaining(slot);
             bool waiting = spells.IsWaiting(slot) && cooldown > 0.05f;
-            string timer = cooldown > 0.05f ? cooldown.ToString("0.0") : "bereit";
+            string timer = cooldown > 0.05f ? cooldown.ToString("0.0") : Loc.Text("hotbar.ready");
             if (waiting)
-                timer = "wartet";
+                timer = Loc.Text("hotbar.waiting");
             if (spell == null)
                 timer = "";
 
